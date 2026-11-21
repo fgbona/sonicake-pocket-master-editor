@@ -8,6 +8,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `apps/mcp/scripts/probe-pedal.ts`: a read-only diagnostic for sessions with the real
+  pedal. It checks the USB port is quiet, sends every known read query (optionally every
+  unmapped one with `--scan`), flags anything that looks like a firmware version and saves
+  the whole exchange to a log file. `docs/hardware-tests-1.0.md` lists the remaining checks
+  on the pedal before 1.0.
 - Toward 1.0, what others rely on is now pinned by tests that fail on any change:
   - Preset files: format version 1 is frozen for 1.x and documented in
     `docs/preset-file-format.md`. A file written by 0.13 is kept in the tests and must

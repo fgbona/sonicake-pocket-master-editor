@@ -71,7 +71,7 @@ async function ask(page: Page, text: string) {
 test('the key is checked before it is kept, and never shown back', async ({ page, pedal }) => {
   await fakeGemini(page, [], false);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await expect(panel(page).getByRole('link', { name: 'Open Google AI Studio' })).toHaveAttribute('href', 'https://aistudio.google.com/apikey');
   await expect(panel(page).getByRole('link', { name: 'Open the Groq console' })).toHaveAttribute('href', 'https://console.groq.com/keys');
   await expect(panel(page).getByText(/must say Free tier/)).toBeVisible();
@@ -97,7 +97,7 @@ test('describing a tone builds it live, lists what changed, and Undo takes it ba
     say('Mesa Dual Rectifier with gain 70, like the Black Album rhythm.'),
   ]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'black album rhythm tone');
   await expect(panel(page).getByText('Mesa Dual Rectifier with gain 70', { exact: false })).toBeVisible();
@@ -117,7 +117,7 @@ test('describing a tone builds it live, lists what changed, and Undo takes it ba
 test('saving is only a proposal: the Save dialog opens filled in, and Cancel saves nothing', async ({ page, pedal }) => {
   const requests = await fakeGemini(page, [call('save_preset', { slot: 'P45', name: 'BLACK ALB' }), say('Not saved, as you prefer.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'save it on 45');
   const dialog = page.getByRole('dialog', { name: 'Save to a preset slot' });
@@ -136,7 +136,7 @@ test('a used-up free quota hands the message to the next model on its own', asyn
   };
   const requests = await fakeGemini(page, [quota, say('Hello from Flash-Lite')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'hi');
   await expect(panel(page).getByText('Hello from Flash-Lite')).toBeVisible();
@@ -156,7 +156,7 @@ test('what a tool reports matches the pedal: loading, reverting, and undo with n
     say('Back as it was.'),
   ]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'undo that');
   await expect(panel(page).getByText('Nothing to undo.')).toBeVisible();
@@ -183,7 +183,7 @@ test('with a Groq key, Groq builds the tone; when its quota runs out, Gemini tak
   ]);
   const gemini = await fakeGemini(page, [say('Gemini here.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addGroqKey(page);
   await ask(page, 'black album rhythm');
   await expect(panel(page).getByText('Rectifier on.')).toBeVisible();
@@ -216,7 +216,7 @@ test('a refused Groq key is reported once while Gemini answers; a quota cut mid-
     { status: 429, body: { error: { status: 'RESOURCE_EXHAUSTED', details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '60s' }] } } },
   ]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addGroqKey(page);
   await panel(page).getByRole('button', { name: 'Keys' }).click();
   await geminiSetup(page).getByLabel('Gemini API key').fill(KEY);
@@ -247,7 +247,7 @@ test('a key the browser will not keep says so; a failed answer stays in what the
   });
   const requests = await fakeGemini(page, [{ status: 500, body: { error: { message: 'backend error' } } }, say('Second try worked.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await panel(page).getByRole('button', { name: 'Keys' }).click();
   await expect(geminiSetup(page).getByText(/this browser would not keep the key/)).toBeVisible();
@@ -269,7 +269,7 @@ test('a tone kept by the assistant goes to the library, and a later conversation
     say('Loaded your Black Album tone.'),
   ]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'this sounds right, keep it');
   await expect(panel(page).getByText('Kept it as BLACK RHY.')).toBeVisible();
@@ -277,7 +277,7 @@ test('a tone kept by the assistant goes to the library, and a later conversation
   const library = page.getByRole('region', { name: 'Preset library' });
   await expect(library.getByText('BLACK RHY')).toBeVisible();
   await expect(library.getByText('Metallica Black Album, rhythm', { exact: false })).toBeVisible();
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
 
   await pickAmp(page, 'Calif DualM');
   await panel(page).getByRole('button', { name: 'New conversation' }).click();
@@ -290,7 +290,7 @@ test('a tone kept by the assistant goes to the library, and a later conversation
 test('an example request fills the message box, so a first-time user only has to press Send', async ({ page, pedal }) => {
   await fakeGemini(page, []);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await panel(page).getByRole('button', { name: 'Black Album rhythm tone' }).click();
   await expect(panel(page).getByRole('textbox', { name: 'Message to the tone assistant' })).toHaveValue('Black Album rhythm tone');
@@ -301,7 +301,7 @@ test("Google refusing the free tier in the person's region says so, with its lis
   const region: Reply = { status: 400, body: { error: { code: 400, status: 'FAILED_PRECONDITION', message: 'User location is not supported for the API use.' } } };
   await fakeGemini(page, [region]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'hi');
   await expect(panel(page).getByText(/Google does not offer the Gemini API where you are/)).toBeVisible();
@@ -311,7 +311,7 @@ test("Google refusing the free tier in the person's region says so, with its lis
 test('a tone saved to another slot still lists what changed', async ({ page, pedal }) => {
   await fakeGemini(page, [call('edit_preset', { changes: [{ kind: 'model', block: 'AMP', model: 'Calif DualM' }] }), call('save_preset', { slot: 'P45', name: 'BLACK ALB' }), say('Saved on P45.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'black album rhythm, save it on 45');
   const save = page.getByRole('dialog', { name: 'Save to a preset slot' });
@@ -325,7 +325,7 @@ test('a tone saved to another slot still lists what changed', async ({ page, ped
 test('an answer that changed nothing says so, instead of an empty space where the changes go', async ({ page, pedal }) => {
   await fakeGemini(page, [say('That is already the tone on the pedal.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'black album rhythm tone');
   await expect(panel(page).getByText('That is already the tone on the pedal.')).toBeVisible();
@@ -345,7 +345,7 @@ test('a long change list scrolls with the conversation, not on its own', async (
     say('Done.'),
   ]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'black album rhythm tone');
   const list = panel(page).getByRole('region', { name: 'What changed' }).locator('ul');
@@ -360,7 +360,7 @@ test('a long change list scrolls with the conversation, not on its own', async (
 test('asked to save, the editor opens the Save dialog even when the model only says it saved', async ({ page, pedal }) => {
   await fakeGemini(page, [say('Saved to P45 as BLACK.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'black album rhythm tone, save it to P45');
   const save = page.getByRole('dialog', { name: 'Save to a preset slot' });
@@ -376,7 +376,7 @@ test('an answer cut after the sound changed still opens the Save dialog that was
     { status: 429, body: { error: { status: 'RESOURCE_EXHAUSTED', details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '600s' }] } } },
   ]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'ratt body talk rhythm, save it to P43');
   const save = page.getByRole('dialog', { name: 'Save to a preset slot' });
@@ -394,7 +394,7 @@ test('a paid provider added with its key answers first, with the model picked fr
   });
   await fakeGroq(page, []);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addGroqKey(page);
   await panel(page).getByRole('button', { name: 'Keys' }).click();
   const paidSection = panel(page).getByRole('region', { name: 'Paid providers' });
@@ -425,7 +425,7 @@ test('Claude added as a paid provider answers through its own API, with the brow
     return route.fulfill({ json: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'From Claude.' }] } });
   });
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   const paidSection = panel(page).getByRole('region', { name: 'Paid providers' });
   await paidSection.getByLabel('Add a paid provider').selectOption('anthropic');
   await paidSection.getByLabel('Claude (Anthropic) API key').fill('fake-anthropic-key-e2e-0000');
@@ -449,7 +449,7 @@ test("the answer order is the person's, and rotation starts each new conversatio
   );
   await fakeGroq(page, [groqSay('From Groq.'), groqSay('From Groq again.')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addGroqKey(page);
   await panel(page).getByRole('button', { name: 'Keys' }).click();
   const paidSection = panel(page).getByRole('region', { name: 'Paid providers' });
@@ -488,7 +488,7 @@ test('a paid Gemini key answers with the model picked from its list and the thor
     return route.fulfill({ json: { status: 'completed', steps: [{ type: 'model_output', content: [{ type: 'text', text: 'From paid Gemini.' }] }] } });
   });
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await expect(panel(page).getByRole('note', { name: /Free keys: no cost/ })).toBeVisible();
   const paidSection = panel(page).getByRole('region', { name: 'Paid providers' });
   await expect(paidSection.getByRole('note', { name: /Paid keys: you pay the provider/ })).toBeVisible();
@@ -506,7 +506,7 @@ test('a paid Gemini key answers with the model picked from its list and the thor
 test('keys can be kept for this session only, and all forgotten at once', async ({ page, pedal }) => {
   await fakeGemini(page, []);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await panel(page).getByLabel('Remember keys on this device').uncheck();
   await addKey(page);
   const stored = () => page.evaluate(() => [localStorage.getItem('pocket-master-editor.geminiKey.v1'), sessionStorage.getItem('pocket-master-editor.geminiKey.v1') !== null]);
@@ -528,7 +528,7 @@ for (const reduced of [false, true]) {
       return route.fulfill({ json: say('Done.').body });
     });
     await connect(page, pedal);
-    await openDock(page, 'Assistant');
+    await openDock(page, 'AI');
     await addKey(page);
     await ask(page, 'anything');
     const busy = panel(page).getByRole('status').filter({ hasText: 'Working on it…' });
@@ -547,7 +547,7 @@ for (const reduced of [false, true]) {
 test('replies render bold and lists instead of raw Markdown, and never as HTML', async ({ page, pedal }) => {
   await fakeGemini(page, [say('**Amp:** Calif DualM\n- Gain 70\n- Bass 40\n<img src=x onerror=alert(1)>')]);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await addKey(page);
   await ask(page, 'hi');
   const reply = panel(page).locator('.assistant-message.is-assistant .md');
@@ -560,7 +560,7 @@ test('replies render bold and lists instead of raw Markdown, and never as HTML',
 test('the Gemini free-plan privacy sentence only shows when a Google key is in play', async ({ page, pedal }) => {
   await fakeGroq(page, []);
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   await expect(panel(page).locator('p.muted.small', { hasText: 'go to the provider of your key' })).toContainText("On Gemini's free plan");
   await addGroqKey(page);
   await expect(panel(page).locator('p.muted.small', { hasText: 'go to the provider of your key' })).not.toContainText('Gemini');

@@ -73,7 +73,7 @@ test('the assistant proposes a capture from a link; the Clones panel asks the pe
   });
   await page.route('https://clones.example/**', (route) => route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/octet-stream', body: clo() }));
   await connectMatribox(page);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   const chat = page.getByRole('region', { name: 'Tone assistant' });
   const setup = chat.getByRole('region', { name: 'Groq key' });
   await setup.getByLabel('Groq API key').fill('fake-groq-key-e2e-0000');
@@ -103,7 +103,7 @@ test('a link that cannot be downloaded is an error for the assistant, and the pe
   });
   await page.route('https://clones.example/**', (route) => route.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' }, body: 'no' }));
   await connectMatribox(page);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   const chat = page.getByRole('region', { name: 'Tone assistant' });
   const setup = chat.getByRole('region', { name: 'Groq key' });
   await setup.getByLabel('Groq API key').fill('fake-groq-key-e2e-0000');

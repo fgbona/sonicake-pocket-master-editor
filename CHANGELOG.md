@@ -6,6 +6,15 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Workstation UI: the dock's Assistant tab is now just "AI" ("IA" in Portuguese), lit in the stage
+  red inside a glowing red frame with a slowly breathing LED (still with reduced motion), so the
+  tone assistant stands out, and it sits after Controls (after Clones & IRs on the
+  Pocket Master) instead of first.
+
+## [1.3.0] - 2026-11-28
+
 ### Added
 
 - **Manual TONE3000 search in the Matribox II Pro editor's Clones & IRs tab.** Once signed in to
@@ -73,6 +82,18 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - The Pocket Master's preset file buttons (export/import) moved into the Library section.
+- Matribox II Pro tone assistant: **it uses your own captures.** The first message lists the filled
+  CLONE slots by name ("Clone 10": "OSX RECTIFIER"), and the assistant puts a capture in place of
+  the built-in AMP model when its name matches the amp or drive the reference calls for (never a
+  capture of other gear just because it is there), with a CAB after it only when the output needs
+  one, and no boost before one already boosted ("TS", "808" in the name). The owner found his
+  Rectifier capture far fuller and stronger than the built-in amp and cab.
+- Matribox II Pro tone assistant: **"The assistant builds for:"** headphones, PA or interface (with
+  cabinet), or an amp's FX return (no cabinet), kept per browser. Into a return the first message
+  says so and the assistant puts no CAB or IR: the owner plays into his Marshall DSL40CR's return,
+  where the built-in Green 4x12 on top of the real speaker made the tone dull, boomy and weak. For
+  amps played cranked (Plexi, JCM800, AC30) it gets the drive from the amp gain and the boost, not
+  from EQ cuts (its Van Halen tone had the EP booster at 10 and the amp at 48).
 
 ### Fixed
 
@@ -1929,7 +1950,8 @@ Container image: `ghcr.io/fgbona/sonicake-pocket-master-editor:v0.1.0`.
 - An out-of-range preset index from the pedal shows an error instead of
   crashing the page.
 
-[Unreleased]: https://github.com/fgbona/OpenSonicX/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/fgbona/OpenSonicX/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/fgbona/OpenSonicX/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/fgbona/OpenSonicX/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/fgbona/OpenSonicX/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/fgbona/OpenSonicX/compare/v1.1.0...v1.2.0

@@ -255,6 +255,8 @@ button.knob-value:focus-visible, .knob-input:focus-visible { outline: 3px solid 
   }
   .ws-shell .ws-dock-tabs [role='tab']:hover, .ws-dock-fold:hover { background: var(--fill); }
   .ws-shell .ws-dock-tabs [role='tab'][aria-selected='true'] { background: var(--fill-strong); box-shadow: inset 0 -3px 0 var(--ws-amber); }
+  /* The AI tab stands out in the stage red, like a lit LEAD label. */
+  .ws-shell .ws-dock-tabs #ws-assistant-tab { color: var(--red); letter-spacing: 0.08em; text-shadow: 0 0 8px color-mix(in srgb, var(--red) 45%, transparent); }
   .ws-shell .ws-dock-tabs [role='tab']:focus-visible, .ws-dock-fold:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 60%, transparent); }
   .ws-dock-fold { color: var(--label-2); font-weight: 600; }
   .ws-shell .ws-dock-panel { display: none; }

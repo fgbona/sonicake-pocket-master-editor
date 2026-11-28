@@ -8,8 +8,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Workstation UI: the dock's Assistant tab is now "AI Assistant" ("Assistente IA"), so it is clear
-  the tone assistant is the AI.
+- Workstation UI: the dock's Assistant tab is now just "AI" ("IA" in Portuguese), lit in the stage
+  red so the tone assistant stands out.
 
 ## [1.3.0] - 2026-11-28
 

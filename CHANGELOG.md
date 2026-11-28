@@ -9,7 +9,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Workstation UI: the dock's Assistant tab is now just "AI" ("IA" in Portuguese), lit in the stage
-  red so the tone assistant stands out.
+  red so the tone assistant stands out, and it sits after Controls (after Clones & IRs on the
+  Pocket Master) instead of first.
 
 ## [1.3.0] - 2026-11-28
 

@@ -169,7 +169,6 @@ export default function EditorPage() {
   // Without a connected pedal only the files and the backups show, one after the other.
   const dockTabs: DockTab[] = connected
     ? [
-        ...(pm.preset ? [{ id: 'ws-assistant', label: 'ws.rack.assistant', content: <AssistantPanel agent={toneAgent} /> } as const] : []),
         {
           id: 'ws-clones',
           label: 'ws.rack.clones',
@@ -180,6 +179,7 @@ export default function EditorPage() {
             </>
           ),
         },
+        ...(pm.preset ? [{ id: 'ws-assistant', label: 'ws.rack.assistant', content: <AssistantPanel agent={toneAgent} /> } as const] : []),
         {
           id: 'ws-library',
           label: 'ws.rack.library',

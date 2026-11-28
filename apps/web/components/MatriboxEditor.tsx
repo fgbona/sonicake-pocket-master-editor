@@ -210,7 +210,6 @@ export function MatriboxEditor({ port, footer }: { port: MidiPort; footer?: Reac
               active={dock}
               onActive={setDock}
               tabs={[
-                { id: 'ws-assistant', label: 'ws.rack.assistant', content: <MatriboxAssistant mb={mb} history={history} proposeSave={proposeSave} proposeClone={proposeClone} t3k={t3k} /> },
                 {
                   id: 'ws-clones',
                   label: 'ws.rack.clones',
@@ -247,6 +246,7 @@ export function MatriboxEditor({ port, footer }: { port: MidiPort; footer?: Reac
                     </>
                   ),
                 },
+                { id: 'ws-assistant', label: 'ws.rack.assistant', content: <MatriboxAssistant mb={mb} history={history} proposeSave={proposeSave} proposeClone={proposeClone} t3k={t3k} /> },
                 { id: 'ws-library', label: 'ws.rack.library', content: <MatriboxLibrary mb={mb} history={history} /> },
                 {
                   id: 'ws-backups',

@@ -24,7 +24,7 @@ const chain = expectChain;
 const loaded = (unit: { editBuffer: Uint8Array }) => parseMbPreset(unit.editBuffer);
 
 async function openChat(page: Page) {
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI');
   const setup = panel(page).getByRole('region', { name: 'Groq key' });
   await setup.getByLabel('Groq API key').fill('fake-groq-key-e2e-0000');
   await setup.getByRole('button', { name: 'Save key' }).click();
@@ -153,7 +153,7 @@ test.describe('in Portuguese', () => {
   test.use({ locale: 'pt-BR' });
   test('the Matribox assistant speaks Portuguese', async ({ page }) => {
     await connectMatribox(page);
-    await openDock(page, 'Assistente');
+    await openDock(page, 'IA');
     await expect(page.getByText(/o catálogo de modelos vão para o provedor da sua chave/)).toBeVisible();
   });
 });

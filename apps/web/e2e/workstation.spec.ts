@@ -131,7 +131,7 @@ test('the shell fills a 1440×900 screen: no page scroll, the bank list and the 
   await expect(page.getByRole('region', { name: '3. AMP block' })).toBeInViewport();
   await expect(page.getByRole('tablist', { name: 'Workstation dock' })).toBeInViewport();
   // Opening the dock still keeps the page itself from scrolling.
-  await page.getByRole('tab', { name: 'Assistant' }).click();
+  await page.getByRole('tab', { name: 'AI' }).click();
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight)).toBe(true);
 });
 
@@ -139,7 +139,7 @@ test('the dock has real tabs: one panel at a time, arrow keys move, the open tab
   await page.setViewportSize({ width: 1440, height: 900 });
   await connectMatribox(page);
   const tabs = page.getByRole('tablist', { name: 'Workstation dock' });
-  await expect(tabs.getByRole('tab')).toHaveText(['Assistant', 'Clones & IRs', 'Controls', 'Library', 'Backups', 'Global & EQ']);
+  await expect(tabs.getByRole('tab')).toHaveText(['Clones & IRs', 'Controls', 'AI', 'Library', 'Backups', 'Global & EQ']);
   // Folded at first: the chain and the block get the room.
   await expect(page.getByRole('tabpanel')).toHaveCount(0);
   await tabs.getByRole('tab', { name: 'Clones & IRs' }).click();
@@ -159,14 +159,14 @@ test('the dock has real tabs: one panel at a time, arrow keys move, the open tab
   await expect(page.getByRole('region', { name: 'Global options' }).getByRole('img', { name: 'Global EQ response' })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   // The preset bar's Global options button opens the same tab.
-  await tabs.getByRole('tab', { name: 'Assistant' }).click();
+  await tabs.getByRole('tab', { name: 'AI' }).click();
   await page.getByRole('button', { name: 'Global options', exact: true }).click();
   await expect(tabs.getByRole('tab', { name: 'Global & EQ' })).toHaveAttribute('aria-selected', 'true');
 
   await tabs.getByRole('tab', { name: 'Global & EQ' }).click();
   await expect(page.getByRole('tabpanel')).toHaveCount(0);
   await page.getByRole('button', { name: 'Open the dock' }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Assistant' })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: 'Clones & IRs' })).toBeVisible();
 });
 
 test('below 1280 px the dock stacks: no tabs, every panel on the page', async ({ page }) => {

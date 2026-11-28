@@ -954,6 +954,7 @@ button, select { font: inherit; color: inherit; }
 
 /* Tone assistant */
 .assistant-body { padding: 12px 16px 14px; display: grid; gap: 10px; }
+.mb-rig { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; font-size: 0.9em; }
 .assistant-body p { margin: 0; }
 .assistant .panel-head { flex-wrap: wrap; gap: 8px; }
 .assistant-head-actions { display: flex; gap: 8px; }

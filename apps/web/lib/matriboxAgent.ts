@@ -7,6 +7,7 @@
 import {
   CHAT_INSTRUCTIONS_THOROUGH,
   checkMbCloneName,
+  mbDefaultCloneName,
   checkMbPresetName,
   mbCheckDspLoad,
   MB_CLONE_SLOTS,
@@ -27,6 +28,7 @@ import {
 } from '@pocket-master/core';
 import { SAVE_VERB, type ToneAgent } from './assistant.ts';
 import { isEmptyClone, type CloneSource } from './cloneSource.ts';
+import type { MbRig } from './matriboxRig.ts';
 import type { Lang } from './i18n.ts';
 import { type ControlChange, controlWrites, MB_FS_FUNCTION_NAMES, mbControlsText } from './matriboxAssign.ts';
 import { findTone, tonePreset, type MbTone } from './matriboxLibrary.ts';
@@ -59,6 +61,8 @@ export interface MbAgentHost {
   proposeClone(proposal: { readonly slot: number; readonly name: string; readonly source: CloneSource }): Promise<'uploaded' | 'cancelled'>;
   /** Changes the drum machine (none: reads it); resolves with its state as the unit reads back, throws when refused. */
   drums(change: MbDrumChange | null): Promise<MbDrumState>;
+  /** Where the person plays (none: headphones, PA or interface, which need a cabinet). */
+  rig?(): MbRig;
   /** TONE3000 search, when the editor has it set up. */
   tone3000?: { signedIn(): boolean; find(query: string): Promise<TonePage> };
 }
@@ -257,6 +261,7 @@ const INSTRUCTIONS = [
   'Do not ask for details the person did not give: make reasonable choices, say briefly what you chose and why, naming the real gear, and invite them to ask for adjustments by ear.',
   'The editor shows every change live, and the person can undo. Nothing is stored until save_preset, which opens the editor\'s Save dialog for the person to confirm; propose it only when the person asks to save (e.g. "on 12A"). Never say a tone is saved unless save_preset answered that the person saved it.',
   'A kept tone in the first message is reused with load_saved_tone only when it matches the request: the same instrument, part and reference, as its notes and gear show; a name that merely mentions the band is not enough, and when in doubt, build the tone. When the person says a tone sounds right, offer to keep it with keep_tone, naming the reference in notes.',
+  'The person\'s own captures (NAM captures of real amps and pedals in the CLONE slots, listed in the first message by their names) usually sound fuller and more real than the built-in AMP models: when a capture\'s name matches the amp or drive the reference calls for, or its close family, use that CLONE model in place of the AMP model and say so; never use a capture of different gear just because it is there. After a capture put a CAB/IR only when the sound needs a cabinet (see how the person plays) and the name does not say it holds the speaker ("full rig", "cab"); a capture already boosted ("TS", "808", "boosted" in the name) needs no boost before it, otherwise keep the drive or boost the reference uses. For amps played cranked (Plexi, JCM800, AC30), get the drive from the amp gain and the boost, not from cuts.',
   'For gear the unit has no model of, find a NAM capture (search_tone3000, or a link the person gives) and propose it with upload_clone: the editor opens its Clones panel to convert it (about half a minute) and the person confirms the overwrite of the CLONE slot. Never say a capture is written unless upload_clone says the person wrote it.',
   'To practise ("play a rock beat at 100 BPM"), start the drum machine with set_drums: rhythm, bpm and play: true in one call; say which rhythm plays.',
   'Use as few calls as possible: build_tone and edit_preset already return the resulting preset. Answer in the language the person writes in, in two to four short sentences.',
@@ -400,6 +405,14 @@ async function run(host: MbAgentHost, name: string, args: unknown): Promise<stri
   }
 }
 
+/** The filled CLONE slots by the model name build_tone takes ("Clone 2": "Plexi"); empty slots left out. */
+const capturesText = (host: MbAgentHost): string =>
+  host
+    .cloneNames()
+    .map((name, i) => (isEmptyClone(i, name) ? null : `- ${mbDefaultCloneName(i)}: "${name.trim()}"`))
+    .filter((line) => line !== null)
+    .join('\n');
+
 export function matriboxAgent(host: MbAgentHost): ToneAgent {
   const presetText = () => {
     const s = host.snapshot();
@@ -412,7 +425,9 @@ export function matriboxAgent(host: MbAgentHost): ToneAgent {
     context: (thorough) => {
       const { catalog } = host.snapshot();
       const tones = tonesText(host, catalog);
-      return `Loaded preset:\n${presetText()}\n\nModels by module (name, then the gear it is based on):\n${mbCatalogText(catalog, thorough)}${tones ? `\n\nSaved tones (load_saved_tone):\n${tones}` : ''}`;
+      const captures = capturesText(host);
+      const plays = host.rig?.() === 'amp-return' ? "How the person plays: into a real amp's FX return (its power amp and speaker are the cabinet), so put no CAB or IR blocks and say so.\n\n" : '';
+      return `${plays}Loaded preset:\n${presetText()}\n\nModels by module (name, then the gear it is based on):\n${mbCatalogText(catalog, thorough)}${captures ? `\n\nYour captures (CLONE slots):\n${captures}` : ''}${tones ? `\n\nSaved tones (load_saved_tone):\n${tones}` : ''}`;
     },
     current: presetText,
     runner: () => {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { MB_CATALOG } from '@pocket-master/core';
 import { useAiAgent } from '@/lib/aiBridge';
 import { matriboxAgent } from '@/lib/matriboxAgent';
+import { loadMbRig, saveMbRig, type MbRig } from '@/lib/matriboxRig';
 import { keepMbTone, mbLibraryNow, mbTone } from '@/lib/matriboxLibrary';
 import type { CloneSource } from '@/lib/cloneSource';
 import type { Matribox } from '@/lib/useMatribox';
@@ -24,10 +25,11 @@ interface Props {
 
 /** The tone assistant on the Matribox: it picks models from the built-in catalog by the gear they are based on. */
 export function MatriboxAssistant({ mb, history, proposeSave, proposeClone, t3k }: Props) {
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
+  const [rig, setRig] = useState<MbRig>(loadMbRig);
   // The agent stays the same across renders and reads the editor as it is now.
-  const latest = useRef({ mb, history, proposeSave, proposeClone, t3k, lang });
-  latest.current = { mb, history, proposeSave, proposeClone, t3k, lang };
+  const latest = useRef({ mb, history, proposeSave, proposeClone, t3k, lang, rig });
+  latest.current = { mb, history, proposeSave, proposeClone, t3k, lang, rig };
   const agent = useMemo(
     () =>
       matriboxAgent({
@@ -55,6 +57,7 @@ export function MatriboxAssistant({ mb, history, proposeSave, proposeClone, t3k 
         },
         proposeSave: (index, name) => latest.current.proposeSave(index, name),
         cloneNames: () => latest.current.mb.unit?.cloneNames ?? [],
+        rig: () => latest.current.rig,
         proposeClone: ({ slot, name, source }) => latest.current.proposeClone(slot, name, source),
         tone3000: t3k.configured ? { signedIn: () => latest.current.t3k.signedIn, find: (query) => latest.current.t3k.find(query, 'nam') } : undefined,
         tones: mbLibraryNow,
@@ -68,5 +71,21 @@ export function MatriboxAssistant({ mb, history, proposeSave, proposeClone, t3k 
   );
   // The desktop app's AI connection drives the same tools while this editor is up.
   useAiAgent('matribox', agent);
-  return <AssistantPanel agent={agent} hint="mb.assistantHint" privacy="mb.assistantPrivacy" />;
+  const options = (
+    <label className="mb-rig">
+      {t('mb.rig')}
+      <select
+        value={rig}
+        onChange={(e) => {
+          const next = e.target.value === 'amp-return' ? 'amp-return' : 'full';
+          setRig(next);
+          saveMbRig(next);
+        }}
+      >
+        <option value="full">{t('mb.rigFull')}</option>
+        <option value="amp-return">{t('mb.rigReturn')}</option>
+      </select>
+    </label>
+  );
+  return <AssistantPanel agent={agent} hint="mb.assistantHint" privacy="mb.assistantPrivacy" options={options} />;
 }

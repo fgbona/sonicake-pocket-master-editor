@@ -63,6 +63,18 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - The Pocket Master's preset file buttons (export/import) moved into the Library section.
+- Matribox II Pro tone assistant: **it uses your own captures.** The first message lists the filled
+  CLONE slots by name ("Clone 10": "OSX RECTIFIER"), and the assistant puts a capture in place of
+  the built-in AMP model when its name matches the amp or drive the reference calls for (never a
+  capture of other gear just because it is there), with a CAB after it only when the output needs
+  one, and no boost before one already boosted ("TS", "808" in the name). The owner found his
+  Rectifier capture far fuller and stronger than the built-in amp and cab.
+- Matribox II Pro tone assistant: **"The assistant builds for:"** headphones, PA or interface (with
+  cabinet), or an amp's FX return (no cabinet), kept per browser. Into a return the first message
+  says so and the assistant puts no CAB or IR: the owner plays into his Marshall DSL40CR's return,
+  where the built-in Green 4x12 on top of the real speaker made the tone dull, boomy and weak. For
+  amps played cranked (Plexi, JCM800, AC30) it gets the drive from the amp gain and the boost, not
+  from EQ cuts (its Van Halen tone had the EP booster at 10 and the amp at 48).
 
 ### Fixed
 

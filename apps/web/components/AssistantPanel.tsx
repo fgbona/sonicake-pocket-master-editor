@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { Difference } from '@pocket-master/core';
 import { forgetKeys, loadKey, loadOrder, loadPaid, loadRemember, loadRotate, maskKey, removeKey, saveKey, saveOrder, savePaid, saveRemember, saveRotate, type PaidEntry } from '@/lib/aiKey';
 import { nextReset, recordRequest, usedToday, useAiUsage } from '@/lib/aiUsage';
@@ -42,6 +42,8 @@ interface Props {
   hint?: MessageKey;
   /** What goes to the provider. */
   privacy?: MessageKey;
+  /** Pedal-specific options shown at the top of the panel (the Matribox's output choice). */
+  options?: ReactNode;
 }
 
 interface Message {
@@ -193,7 +195,7 @@ function KeySetup({
 }
 
 /** Chat that builds tones on the pedal from a description, with the person's own free AI keys. */
-export function AssistantPanel({ agent, hint = 'assistant.hint', privacy = 'assistant.privacy' }: Props) {
+export function AssistantPanel({ agent, hint = 'assistant.hint', privacy = 'assistant.privacy', options }: Props) {
   const { t, te, lang } = useI18n();
   const [keys, setKeys] = useState<Partial<Record<Provider, string>>>({});
   const [paid, setPaid] = useState<readonly PaidEntry[]>([]);
@@ -406,6 +408,7 @@ export function AssistantPanel({ agent, hint = 'assistant.hint', privacy = 'assi
         )}
       </header>
       <div className="assistant-body">
+        {options}
         {!hasKey || managing ? (
           <>
             {!hasKey && <p>{t('assistant.intro')}</p>}

@@ -14,5 +14,11 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: { baseURL: `http://localhost:${PORT}`, locale: 'en-US', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: { command: `npm run build:worker && npx next dev -p ${PORT}`, url: `http://localhost:${PORT}`, reuseExistingServer: !process.env.CI, timeout: 120_000 },
+  webServer: {
+    command: `npm run build:worker && npx next dev -p ${PORT}`,
+    url: `http://localhost:${PORT}`,
+    reuseExistingServer: !process.env.CI,
+    env: { NEXT_PUBLIC_TONE3000_CLIENT_ID: 'e2e-mock-client' }, // a made-up app id: specs mock the TONE3000 API
+    timeout: 120_000,
+  },
 });

@@ -6,6 +6,7 @@ import { ccChannelOf } from '@/lib/matriboxGlobals';
 import { mbLookKey } from '@/lib/matriboxLook';
 import { useMatribox } from '@/lib/useMatribox';
 import { useMatriboxHistory } from '@/lib/useMatriboxHistory';
+import { MatriboxToneSearch } from './MatriboxToneSearch';
 import { useTone3000 } from '@/lib/useTone3000';
 import { useUndoKeys } from '@/lib/useUndoKeys';
 import { useMatriboxDevice } from '@/lib/workstation/useDevice';
@@ -215,6 +216,7 @@ export function MatriboxEditor({ port, footer }: { port: MidiPort; footer?: Reac
                   label: 'ws.rack.clones',
                   content: (
                     <>
+                      <MatriboxToneSearch mb={mb} t3k={t3k} onLoad={(slot, name, source) => void proposeClone(slot, name, source).catch(() => undefined)} />
                       <MatriboxClones mb={mb} t3k={t3k} proposal={cloneProposal} onProposalEnd={() => setCloneProposal(null)} />
                       <MatriboxIrs mb={mb} />
                     </>

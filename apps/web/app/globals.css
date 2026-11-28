@@ -356,6 +356,7 @@ button, select { font: inherit; color: inherit; }
 .t3k-info strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t3k-desc { color: var(--label-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .t3k-login { display: grid; gap: 6px; }
+.t3k-models { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 
 /* Install dialog */
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: 0.875rem; }

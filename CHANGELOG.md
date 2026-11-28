@@ -8,6 +8,16 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Manual TONE3000 search in the Matribox II Pro editor's Clones & IRs tab.** Once signed in to
+  TONE3000, a search panel takes a query, a platform (NAM captures or cabinet IRs) and a gear type
+  (amp, pedal, full rig, outboard) and lists each tone with its creator, gear, platform, number of
+  models and downloads, plus a link to it on TONE3000. "Load into CLONE" hands the capture (after
+  choosing a model when the tone has several) to the existing Clones panel, which downloads,
+  converts and checks it and asks for the overwrite confirmation before anything is sent to the
+  unit; the slot defaults to the first empty CLONE. IR results can be browsed only: the editor does
+  not upload IRs to the Matribox yet. It reuses the TONE3000 client and the assistant's load path.
+  Strings in English and Portuguese; unit test for the clone name rule and an e2e test with the
+  TONE3000 API mocked.
 - **The workstation UI is the editor's new default interface.**
   See [docs/design/workstation-ui.md](docs/design/workstation-ui.md) for the layouts, the visual system
   and what is still open.

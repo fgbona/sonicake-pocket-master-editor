@@ -107,11 +107,11 @@ export function useTone3000() {
   }, [save]);
 
   const search = useCallback(
-    async (query: string, format: 'nam' | 'ir', page = 1) => {
+    async (query: string, format: 'nam' | 'ir', page = 1, gears?: readonly string[]) => {
       setSearching(true);
       setError(null);
       try {
-        setResults(await searchTones(await token(), { query, format, page }));
+        setResults(await searchTones(await token(), { query, format, page, gears }));
       } catch (e) {
         setError(message(e));
       } finally {

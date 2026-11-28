@@ -6,6 +6,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Workstation UI: the amp faceplate's "Based on" line is set in the condensed label face, bold,
+  uppercase and tracked out, instead of a cursive script, which read as dated. One web font fewer.
+
 ### Added
 
 - **The workstation UI is the editor's new default interface.**

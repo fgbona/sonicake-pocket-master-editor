@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Barlow_Condensed, Share_Tech_Mono, Yellowtail } from 'next/font/google';
+import { Barlow_Condensed, Share_Tech_Mono } from 'next/font/google';
 import './globals.css';
 import './matribox.css';
 import './workstation.css';
@@ -11,8 +11,6 @@ import { THEME_BOOT_SCRIPT } from '@/components/ThemeToggle';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, softwareApplicationJsonLd } from '@/lib/seo';
 
-/** The script lettering on the amp's faceplate; self-hosted by Next, so it works offline. */
-const script = Yellowtail({ weight: '400', subsets: ['latin'], variable: '--font-script', display: 'swap' });
 /**
  * The workstation's labels (a condensed technical sans) and its readouts (a fixed-width display face);
  * self-hosted by Next and preloaded; the display's lines do not wrap, so a late font cannot change their height.
@@ -50,7 +48,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${script.variable} ${labels.variable} ${readout.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${labels.variable} ${readout.variable}`} suppressHydrationWarning>
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a constant script from this code base (no user data), run before the first paint */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />

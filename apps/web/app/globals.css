@@ -695,7 +695,8 @@ button, select { font: inherit; color: inherit; }
 .face-amp .editor-info { grid-area: info; margin: 0; background: rgba(0, 0, 0, 0.06); }
 :root[data-theme='dark'] .face-amp .editor-info { background: rgba(0, 0, 0, 0.28); }
 .amp-script {
-  grid-area: script; margin: 0; font-family: var(--font-script), cursive; font-size: 1.75rem; line-height: 1.1;
+  grid-area: script; margin: 0; font-family: var(--font-label), system-ui, sans-serif; font-weight: 700; font-size: 1.35rem;
+  line-height: 1.1; text-transform: uppercase; letter-spacing: 0.18em;
   color: #3a2a12; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 :root[data-theme='dark'] .amp-script { color: #f4c66b; text-shadow: 0 0 10px rgba(255, 179, 64, 0.45), 0 1px 0 rgba(0, 0, 0, 0.8); }

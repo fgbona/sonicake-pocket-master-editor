@@ -391,7 +391,13 @@ echoes it.
 
 The gains of bands 1..4 are words 10, 14, 18, 22; Global options writes all four (band 2's write
 was captured, the others follow the same rule and waveod's handler, which clamps the value to the
-word's range and echoes what it kept). The cuts' frequencies are shown, not written.
+word's range and echoes what it kept).
+
+**Frequency and Q writes (not captured).** `mbSetGlobalEqFrequency` writes a band's frequency (words 8, 12,
+16, 20; 20..20000 Hz), the Lo Cut's (word 1; 20..1000 Hz, 19 = off) or the Hi Cut's (word 28; 1000..20000 Hz,
+20001 = off), and `mbSetGlobalEqQ` a band's Q (words 9, 13, 17, 21; 0.1..10). Unlike the gain and level
+writes, **none of these was captured from the official editor**: they follow the word layout above through
+the same `eqWrite` and must be checked on the owner's unit before a release.
 
 **The EQ switch**: flag 1, cmd `16`, `01 00 00 16` + u32 0/1 (`mbSetGlobalEqOn`), read with the same
 argument. The unit answers both with `00 00 00 00` + u32, not an echo (mb-39: off, then on), so the
@@ -1030,6 +1036,12 @@ them as `MB_CATALOG`, built by `mbCatalog(map, text)` from two files of ours:
   (the web assistant the one of the UI). An optional `gear` names the real gear in plain text
   (no trademark signs); when set it is the model's `basedOn` (the menus' right column, "Based
   on"), and the descriptions start with "Inspired by <gear>." / "Inspirado no <gear>.".
+
+Parameter units live in a third file, `packages/core/src/matribox/units.json`, which is edited by hand
+(the generator never touches it): a key `"MODULE:Label"` gives the unit to every model of that module
+with that control name, and `"MODULE:fxid:Label"` to a single model, overriding the first. Only units
+that are certain are listed (the manual, plus a matching range); a parameter with no entry shows the
+bare number. `mbFormatValue(value, param)` renders it ("400 ms", "1.2 kHz", or the plain number).
 
 Schema of `models.json` (version 1):
 

@@ -1,15 +1,18 @@
 'use client';
 
-import type { MbParam, MbResolvedParam } from '@pocket-master/core';
+import { mbFormatValue, type MbParam, type MbResolvedParam } from '@pocket-master/core';
 import { mbControl, mbSteps } from '@/lib/matriboxLook';
 import { Knob } from './Knob';
 import { useI18n } from './I18n';
+import { DirtyMark } from './workstation/DirtyMark';
 
 interface Props {
   param: MbResolvedParam;
   /** The catalog's parameter: its step, default and the labels of a list's steps. */
   spec: MbParam | undefined;
   disabled: boolean;
+  /** The value differs from what the unit stores. */
+  dirty?: boolean;
   onChange: (value: number) => void;
 }
 
@@ -20,7 +23,7 @@ const round = (n: number) => String(Number(n.toFixed(2)));
  * few whole steps, e.g. Mode 0..3) or a knob. Values are the unit's own numbers; a knob whose
  * range is not 0..100 says it under its name.
  */
-export function MatriboxParam({ param, spec, disabled, onChange }: Props) {
+export function MatriboxParam({ param, spec, disabled, dirty = false, onChange }: Props) {
   const { t } = useI18n();
   const range = { min: param.min, max: param.max, step: spec?.step ?? 1 };
   // A value the unit never set reads as not a number: shown as the minimum.
@@ -30,7 +33,8 @@ export function MatriboxParam({ param, spec, disabled, onChange }: Props) {
   if (kind === 'switch') {
     const on = value >= 0.5;
     return (
-      <div className="editor-toggle">
+      <div className={`editor-toggle${dirty ? ' is-dirty' : ''}`}>
+        {dirty && <DirtyMark />}
         <span className="knob-value" aria-hidden="true">
           {on ? t('block.on') : t('block.off')}
         </span>
@@ -44,7 +48,8 @@ export function MatriboxParam({ param, spec, disabled, onChange }: Props) {
   if (kind === 'select') {
     const steps = mbSteps(range);
     return (
-      <div className="editor-toggle">
+      <div className={`editor-toggle${dirty ? ' is-dirty' : ''}`}>
+        {dirty && <DirtyMark />}
         <span className="knob-value" aria-hidden="true">
           {spec?.options?.[steps.indexOf(value)] ?? round(value)}
         </span>
@@ -74,10 +79,11 @@ export function MatriboxParam({ param, spec, disabled, onChange }: Props) {
       min={param.min}
       max={param.max}
       step={range.step > 0 ? range.step : 1}
-      display={round(value)}
+      display={mbFormatValue(value, spec ?? {})}
       defaultValue={spec?.defaultValue}
-      hint={percent ? undefined : `${round(param.min)} … ${round(param.max)}`}
+      hint={percent ? undefined : `${round(param.min)} … ${round(param.max)}${spec?.unit ? ` ${spec.unit}` : ''}`}
       disabled={disabled}
+      dirty={dirty}
       onChange={onChange}
     />
   );

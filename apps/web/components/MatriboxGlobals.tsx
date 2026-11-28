@@ -1,29 +1,27 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
-import { MB_FS_FUNCTIONS, MB_GLOBALS, type MbEqBand, type MbGlobalSetting } from '@pocket-master/core';
+import type { ReactNode } from 'react';
+import { MB_FS_FUNCTIONS, MB_GLOBALS, type MbGlobalSetting } from '@pocket-master/core';
 import type { MessageKey } from '@/lib/messages';
 import type { Matribox } from '@/lib/useMatribox';
-import { Dialog } from './Dialog';
+import { Knob } from './Knob';
 import { Segmented } from './SettingsDialog';
 import { useI18n } from './I18n';
+import { EqGraph } from './workstation/EqGraph';
 
 const CHANNELS = Array.from({ length: 17 }, (_, i) => i);
 /** Output channels: -1 off, then Omni and 1..16. */
 const OUT_CHANNELS = [-1, ...CHANNELS];
 const CLOCK_TRS = 1;
 const CLOCK_USB = 2;
-/** The cut filters' frequencies that mean off (19 Hz low, 20001 Hz high). */
-const LOW_CUT_OFF = 19;
-const HIGH_CUT_OFF = 20001;
 const { tempoBpm } = MB_GLOBALS;
 
 export function Switch(p: { label: string; on: boolean; disabled: boolean; onChange: (on: boolean) => void }) {
   return (
     <div className="settings-row">
       <span className="settings-label">{p.label}</span>
-      <button type="button" role="switch" aria-checked={p.on} aria-label={p.label} className={`switch${p.on ? ' switch-on' : ''}`} disabled={p.disabled} onClick={() => p.onChange(!p.on)}>
-        <span className="switch-knob" />
+      <button type="button" role="switch" aria-checked={p.on} aria-label={p.label} className={`hw-switch${p.on ? ' is-on' : ''}`} disabled={p.disabled} onClick={() => p.onChange(!p.on)}>
+        <span className="hw-switch-led" aria-hidden="true" />
       </button>
     </div>
   );
@@ -45,7 +43,7 @@ function Choice(p: { label: string; value: number; options: readonly (readonly [
   return (
     <label className="settings-row">
       <span className="settings-label">{p.label}</span>
-      <select className="param-select" value={p.value} disabled={p.disabled} onChange={(e) => p.onChange(Number(e.target.value))}>
+      <select className="param-select hw-select" value={p.value} disabled={p.disabled} onChange={(e) => p.onChange(Number(e.target.value))}>
         {p.options.map(([v, text]) => (
           <option key={v} value={v}>
             {text}
@@ -60,7 +58,7 @@ function ChannelSelect(p: { label: string; value: number; disabled: boolean; onC
   return (
     <label className="settings-row">
       <span className="settings-label">{p.label}</span>
-      <select className="param-select" value={p.value} disabled={p.disabled} onChange={(e) => p.onChange(Number(e.target.value))}>
+      <select className="param-select hw-select" value={p.value} disabled={p.disabled} onChange={(e) => p.onChange(Number(e.target.value))}>
         {(p.off ? OUT_CHANNELS : CHANNELS).map((c) => (
           <option key={c} value={c}>
             {c === -1 ? p.off : c === 0 ? 'Omni' : c}
@@ -71,25 +69,13 @@ function ChannelSelect(p: { label: string; value: number; disabled: boolean; onC
   );
 }
 
+/** A level shown as a hardware knob (same props the range slider had). */
 export function Slider(p: { label: string; value: number; min: number; max: number; unit?: string; disabled: boolean; onChange: (v: number) => void }) {
-  const fill = ((p.value - p.min) / (p.max - p.min)) * 100;
   const shown = `${p.unit === 'dB' && p.value > 0 ? '+' : ''}${Math.round(p.value * 10) / 10}${p.unit ? ` ${p.unit}` : ''}`;
   return (
-    <label className="settings-row">
-      <span className="settings-label">{p.label}</span>
-      <input
-        type="range"
-        className="param-slider"
-        min={p.min}
-        max={p.max}
-        step={1}
-        value={p.value}
-        disabled={p.disabled}
-        onChange={(e) => p.onChange(Number(e.target.value))}
-        style={{ '--fill': `${fill}%` } as React.CSSProperties}
-      />
-      <span className="param-value">{shown}</span>
-    </label>
+    <div className="settings-row settings-knob">
+      <Knob label={p.label} value={p.value} min={p.min} max={p.max} display={shown} disabled={p.disabled} onChange={p.onChange} />
+    </div>
   );
 }
 
@@ -97,10 +83,10 @@ export function Slider(p: { label: string; value: number; min: number; max: numb
  * Global options of the Matribox II Pro: the settings whose write was captured from the official
  * editor (core globals.ts), read when the editor connects and kept up to date with what is changed
  * on the unit. Each change is one write, confirmed by the unit; brightness and the EQ's frequencies are shown only.
+ * They live in the workstation dock's Global & EQ tab, a page of the unit rather than a dialog.
  */
 export function MatriboxGlobals({ mb }: { mb: Matribox }) {
-  const { t, te } = useI18n();
-  const [open, setOpen] = useState(false);
+  const { t } = useI18n();
   const g = mb.globals;
   const off = mb.busy !== null || !g;
   const general = g?.general;
@@ -108,21 +94,12 @@ export function MatriboxGlobals({ mb }: { mb: Matribox }) {
   const fsFunctions = MB_FS_FUNCTIONS.map((f) => [f.id, t(`mb.fsFn.${f.id}` as MessageKey)] as const);
   const levelSlider = (setting: 'usbRecLevel' | 'usbMonitorLevel', label: string) =>
     general && <Slider label={label} value={general[setting]} min={MB_GLOBALS[setting].min} max={MB_GLOBALS[setting].max} unit="dB" disabled={off} onChange={set(setting)} />;
-  const hz = (b: MbEqBand, offAt: number) => (b.on && b.frequency !== offAt ? `${Math.round(b.frequency)} Hz` : t('mbGlobal.cutOff'));
   return (
-    <>
-      <button
-        type="button"
-        className="btn"
-        disabled={mb.busy !== null}
-        onClick={() => {
-          mb.clearError();
-          setOpen(true);
-        }}
-      >
-        {t('settings.open')}
-      </button>
-      <Dialog open={open} title={t('settings.title')} onClose={() => setOpen(false)}>
+    <section className="panel ws-globals" aria-label={t('settings.title')}>
+      <div className="panel-head">
+        <h2>{t('settings.title')}</h2>
+      </div>
+      <div className="ws-globals-body">
         {!g || !general ? (
           <p className="muted">{mb.busy ? t('settings.reading') : t('settings.unreadable')}</p>
         ) : (
@@ -174,7 +151,7 @@ export function MatriboxGlobals({ mb }: { mb: Matribox }) {
               <ChannelSelect label={t('mbGlobal.channelTrs')} value={general.midiInTrs} disabled={off} onChange={set('midiInTrs')} />
               <label className="settings-row">
                 <span className="settings-label">{t('mbGlobal.source')}</span>
-                <select className="param-select" value={general.midiSource} disabled={off} onChange={(e) => mb.setGlobal('midiSource', Number(e.target.value))}>
+                <select className="param-select hw-select" value={general.midiSource} disabled={off} onChange={(e) => mb.setGlobal('midiSource', Number(e.target.value))}>
                   <option value={0} disabled>
                     {t('mbGlobal.sourceTrs')}
                   </option>
@@ -233,35 +210,11 @@ export function MatriboxGlobals({ mb }: { mb: Matribox }) {
             </FoldedGroup>
             <section className="settings-group" aria-label={t('mbGlobal.eq')}>
               <h3>{t('mbGlobal.eq')}</h3>
-              <Switch label={t('mbGlobal.eqOn')} on={g.eqOn} disabled={off} onChange={mb.setEqOn} />
-              <Slider label={t('mbGlobal.eqLevel')} value={g.eq.level} min={0} max={100} disabled={off} onChange={mb.setEqLevel} />
-              {g.eq.bands.map((b, i) => (
-                <Slider
-                  key={`band${i + 1}`}
-                  label={t('mbGlobal.band', { n: i + 1, freq: `${Math.round(b.frequency)} Hz` })}
-                  value={b.gain}
-                  min={-20}
-                  max={20}
-                  unit="dB"
-                  disabled={off}
-                  onChange={(v) => mb.setEqGain(i, v)}
-                />
-              ))}
-              <p className="muted small">{t('mbGlobal.cuts', { low: hz(g.eq.lowCut, LOW_CUT_OFF), high: hz(g.eq.highCut, HIGH_CUT_OFF) })}</p>
+              <EqGraph eq={g.eq} eqOn={g.eqOn} disabled={off} onOn={mb.setEqOn} onLevel={mb.setEqLevel} onGain={mb.setEqGain} onFrequency={mb.setEqFrequency} onQ={mb.setEqQ} />
             </section>
           </div>
         )}
-        {mb.error && (
-          <p className="alert" role="alert">
-            {te(mb.error)}
-          </p>
-        )}
-        <div className="sheet-actions">
-          <button type="button" className="btn btn-primary" onClick={() => setOpen(false)}>
-            {t('action.done')}
-          </button>
-        </div>
-      </Dialog>
-    </>
+      </div>
+    </section>
   );
 }

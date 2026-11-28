@@ -1,4 +1,4 @@
-import { test, expect, connect } from './fixtures.ts';
+import { test, expect, connect, openDock } from './fixtures.ts';
 import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
@@ -20,6 +20,7 @@ async function pickAmp(page: Page, model: string) {
 
 test('reads the loaded preset, its chain and the slot names', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Clones & IRs');
   await expect(page.getByRole('heading', { name: /P09\s*IRON-LEAD/ })).toBeVisible();
   await expect(amp(page).getByText('Brit 800')).toBeVisible();
   await expect(amp(page).locator('.face-amp')).toHaveAttribute('data-skin', 'marshall');
@@ -85,6 +86,7 @@ test('saves to the loaded slot after backing it up, and checks it on the pedal',
 
 test('a comment on a captured profile shows next to it in the AMP menu', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Clones & IRs');
   const slots = page.getByRole('region', { name: 'Pedal slots' });
   await slots.getByRole('button', { name: 'Comment' }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Comment for Randall SA' });
@@ -108,6 +110,7 @@ test('a save writes the slot right away, without a backup step', async ({ page, 
   expect(pedal.pedal.names[8]).toBe('E2E RECT');
   expect(Array.from(pedal.pedal.slots[8]!)).not.toEqual(original);
   await save.getByRole('button', { name: 'Done' }).click();
+  await openDock(page, 'Backups');
   await expect(page.getByRole('region', { name: 'Backups' }).getByText('Backups taken before a restore')).toBeVisible();
 });
 
@@ -143,6 +146,7 @@ test('undo and redo step through live edits, a knob turn counting as one step', 
 
 test('importing a preset file first shows what it changes from the loaded preset', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Library');
   await pickAmp(page, 'Calif DualM');
   await page
     .getByText('Import preset')
@@ -157,6 +161,7 @@ test('importing a preset file first shows what it changes from the loaded preset
 
 test('a .prst from the Sonicake app imports like a preset file, compared first', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Library');
   await pickAmp(page, 'Calif DualM');
   await page.getByText('Import preset').locator('input[type=file]').setInputFiles(prst('SONIC-LEAD'));
   const dialog = page.getByRole('dialog', { name: 'Import a preset' });
@@ -167,6 +172,7 @@ test('a .prst from the Sonicake app imports like a preset file, compared first',
 
 test('the preset-file import is reachable by keyboard: Tab focuses it and Enter opens the file picker', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Library');
   await page.getByRole('button', { name: 'Export preset' }).focus();
   await page.keyboard.press('Tab');
   await expect(page.getByText('Import preset').locator('input[type=file]')).toBeFocused();
@@ -208,6 +214,7 @@ test('after a save the preset is no longer modified: loading another one does no
 
 test('an exported preset goes into the library, and loads from there with its comparison', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Library');
   const library = page.getByRole('region', { name: 'Preset library' });
   await expect(library.getByText(/Presets you export or import/)).toBeVisible();
   const download = page.waitForEvent('download');
@@ -232,7 +239,7 @@ test('the firmware version shows in Global options, and a different one gets a n
   await connect(page, pedal);
   await expect(page.getByText(/the editor was tested on/)).toBeHidden();
   await page.getByRole('button', { name: 'Global options' }).click();
-  await expect(page.getByRole('dialog', { name: 'Global options' }).getByText('V1.3.3')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Global options' }).getByText('V1.3.3')).toBeVisible();
   await page.keyboard.press('Escape');
 
   pedal.globals = Uint8Array.from(pedal.globals.map((b, i) => (i === 6 ? 0 : i === 7 ? 4 : b))); // 00 04 01 01: V1.4.0
@@ -270,6 +277,7 @@ test("the tuner button turns the pedal's tuner on and off", async ({ page, pedal
 
 test('a preset file picked in Backups opens as a preset import, and a wrong file says why in the panel', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const backups = page.getByRole('region', { name: 'Backups' });
   await backups.locator('input[type=file]').setInputFiles(new URL('../../../packages/core/test/fixtures/preset-files/v1-iron-lead.json', import.meta.url).pathname);
   await expect(page.getByRole('dialog', { name: 'Import a preset' })).toBeVisible();
@@ -285,6 +293,7 @@ test('a preset file picked in Backups opens as a preset import, and a wrong file
 test('back up all presets to a file, then restore them all', async ({ page, pedal }) => {
   test.setTimeout(120_000);
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const originals = pedal.pedal.slots.slice(0, 50).map((s) => Array.from(s));
   const backups = page.getByRole('region', { name: 'Backups' });
   const download = page.waitForEvent('download');
@@ -309,6 +318,7 @@ test('back up all presets to a file, then restore them all', async ({ page, peda
 
 test('importing a backup file says what it holds and opens it, ready to restore', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const backups = page.getByRole('region', { name: 'Backups' });
   const download = page.waitForEvent('download');
   await backups.getByRole('button', { name: 'Back up all presets' }).click();
@@ -321,6 +331,7 @@ test('importing a backup file says what it holds and opens it, ready to restore'
 test('restoring all shows one progress bar with its percentage while it works', async ({ page, pedal }) => {
   test.setTimeout(120_000);
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const backups = page.getByRole('region', { name: 'Backups' });
   await backups.getByRole('button', { name: 'Back up all presets' }).click();
   await backups.getByText('All user presets').click();
@@ -335,6 +346,7 @@ test('restoring all shows one progress bar with its percentage while it works', 
 
 test('a backup card shows its actions at once; one preset restores from its list, with no backup of its own', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const backups = page.getByRole('region', { name: 'Backups' });
   await backups.getByRole('button', { name: 'Back up all presets' }).click();
   await expect(backups.getByRole('button', { name: 'Restore all' })).toBeVisible();
@@ -353,6 +365,7 @@ test('a backup card shows its actions at once; one preset restores from its list
 
 test('a capture or IR slot can be deleted, after a confirmation', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Clones & IRs');
   const slots = page.getByRole('region', { name: 'Pedal slots' });
   const irs = slots.locator('li', { hasText: 'Brutal Pri' });
   await irs.getByRole('button', { name: 'Delete' }).click();
@@ -372,6 +385,7 @@ test('a capture or IR slot can be deleted, after a confirmation', async ({ page,
 
 test('a backup can be deleted from the list, after a confirmation', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const backups = page.getByRole('region', { name: 'Backups' });
   await backups.getByRole('button', { name: 'Back up all presets' }).click();
   await expect(backups.locator('.backup')).toHaveCount(1);

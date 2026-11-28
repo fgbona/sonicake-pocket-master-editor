@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 import { MB_CATALOG, mbAssignments, parseMbPreset, toHex } from '@pocket-master/core';
 import { measure } from './contrast.ts';
-import { blockPanel, connectMatribox, expect, expectChain, MODELS, optionName, settled, test, turnKnob } from './matribox-fixtures.ts';
+import { blockPanel, connectMatribox, expect, expectChain, MODELS, optionName, settled, test, turnKnob, openDock } from './matribox-fixtures.ts';
 
 const loaded = (unit: { editBuffer: Uint8Array }) => parseMbPreset(unit.editBuffer);
 
@@ -162,6 +162,7 @@ test('patch volume, footswitch, CTRL, quick knob and expression assignments reac
   await expect.poll(() => assigned().volume).toBe(80);
 
   // The chip follows the unit: it shows the preset read back after the write.
+  await openDock(page, 'Controls');
   const footswitches = page.getByRole('region', { name: 'Footswitches and CTRL (stomp mode)' });
   await expect(footswitches.getByRole('group', { name: 'CTRL 1' }).getByRole('switch', { checked: true })).toHaveText(['1DYN']);
   await expect(footswitches.getByRole('group', { name: 'CTRL 1' }).getByText('Footswitch A', { exact: true })).toBeVisible();
@@ -261,12 +262,14 @@ test('saving needs an explicit confirmation, backs the slot up first and is chec
   // What 2B stored (empty here), not the loaded preset: the unit reads only a loaded slot truly.
   expect(kept[0].name).toBe('');
   expect(unit.current).toBe(5);
+  await openDock(page, 'Backups');
   await expect(page.getByRole('region', { name: 'Matribox backups' })).toContainText('2B');
 });
 
 test('back up all presets: every slot read once loaded, one file downloaded, the loaded preset loaded again', async ({ page, unit }) => {
   test.slow(); // 240 selects and reads: over 20 s on a busy CI runner
   await connectMatribox(page);
+  await openDock(page, 'Backups');
   const all = page.getByRole('region', { name: 'All presets' });
   const download = page.waitForEvent('download');
   await all.getByRole('button', { name: 'Back up all presets' }).click();
@@ -282,6 +285,7 @@ test('back up all presets: every slot read once loaded, one file downloaded, the
 test('restore all asks for an explicit confirmation, backs everything up first and writes each preset', async ({ page, unit }) => {
   test.slow(); // a backup of all 240 presets first: over 20 s on a busy CI runner
   await connectMatribox(page);
+  await openDock(page, 'Backups');
   const drive = toHex(unit.editBuffer).replaceAll(' ', '');
   const file = {
     format: 'opensonicx-matribox-backup',
@@ -311,6 +315,7 @@ test('restore all asks for an explicit confirmation, backs everything up first a
 
 test('restore all refuses a file that is not a backup-all file', async ({ page }) => {
   await connectMatribox(page);
+  await openDock(page, 'Backups');
   await page.getByLabel('Choose a backup-all file').setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"format":"pocket-master-backup"}') });
   await expect(page.getByRole('region', { name: 'All presets' }).getByRole('alert')).toContainText('not a Matribox backup-all file');
 });
@@ -324,7 +329,10 @@ for (const theme of ['dark', 'light'] as const) {
     await settled(unit); // the buttons fade back in (opacity) once the connect reads are done
     if (theme === 'light') await page.getByRole('button', { name: 'Switch to light theme' }).click();
     expect(await violations()).toEqual([]);
+    await openDock(page, 'Controls');
     await page.getByText('Expression pedal').click();
+    expect(await violations()).toEqual([]);
+    await openDock(page, 'Library');
     // A kept tone in the tone library, one shown and one being renamed.
     const library = page.getByRole('region', { name: 'Tone library' });
     await library.getByRole('button', { name: 'Keep tone' }).click();

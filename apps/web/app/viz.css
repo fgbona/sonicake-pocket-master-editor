@@ -1,0 +1,20 @@
+/* Block screens: a small display at the top of a block's panel, redrawn from its parameters. */
+.viz-screen {
+  display: block; width: 100%; max-width: 320px; height: auto; aspect-ratio: 280 / 104;
+  margin: 0 auto 12px; border-radius: 8px;
+  background: var(--ws-display);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-display-dim) 28%, transparent), inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.viz-grid line { stroke: var(--ws-display-dim); stroke-opacity: 0.16; stroke-width: 1; }
+.viz-trace { fill: none; stroke: var(--tint, var(--ws-display-ink)); stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--tint, var(--ws-display-ink))); transition: opacity 0.15s; }
+.viz-dim { fill: var(--ws-display-dim); stroke: var(--ws-display-dim); stroke-opacity: 0.55; stroke-width: 1.25; stroke-dasharray: 3 3; fill-opacity: 0.55; transition: opacity 0.15s; }
+rect.viz-dim { stroke: none; stroke-dasharray: none; }
+.viz-dot { fill: var(--ws-display); stroke: var(--tint, var(--ws-display-ink)); stroke-width: 2; filter: drop-shadow(0 0 3px var(--tint, var(--ws-display-ink))); }
+.viz-muted { fill: var(--ws-display-dim); fill-opacity: 0.18; }
+.viz-text { fill: currentColor; color: var(--ws-display-ink); font: 10px var(--font-readout-stack); letter-spacing: 0.08em; }
+@media (prefers-reduced-motion: reduce) { .viz-trace, .viz-dim { transition: none; } }
+
+/* Expression sweep: heel to toe, the min..max range lit. */
+.viz-sweep { position: relative; flex: 1 1 100%; min-width: 120px; height: 6px; border-radius: 3px; background: var(--ws-display); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-display-dim) 40%, transparent); overflow: hidden; }
+.viz-sweep-range { position: absolute; top: 0; bottom: 0; background: var(--tint, var(--ws-display-ink)); box-shadow: 0 0 6px var(--tint, var(--ws-display-ink)); transition: left 0.15s, width 0.15s; }
+@media (prefers-reduced-motion: reduce) { .viz-sweep-range { transition: none; } }

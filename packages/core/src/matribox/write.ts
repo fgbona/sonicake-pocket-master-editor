@@ -271,6 +271,14 @@ export function mbAssignExpression({ entry, slot, paramId, min, max }: MbExpress
 }
 
 /**
+ * Clears expression entry `entry` (the editor's "unused"): the assignment with slot -1, as the quick
+ * knob takes "none" and section 7 stores FF (not captured from the official editor).
+ */
+export function mbClearExpression(entry: number): Uint8Array {
+  return write(SET_CMD, [0x02, 0x00, 0x07, 0x01, ...expressionRef(entry), ...u32(NONE_U32), ...u32(0), ...float32LE(0), ...float32LE(100)]);
+}
+
+/**
  * One end of an expression entry: `03 00 07 01` (min) or `04 00 07 01` (max) + u32 group + u32
  * position + f32 (the capture had both u32 at 0; the same addressing as the assignment, unconfirmed).
  */

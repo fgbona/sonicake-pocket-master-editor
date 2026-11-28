@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { parseMbPreset, toHex } from '@pocket-master/core';
-import { blockPanel, connectMatribox, expect, test, turnKnob } from './matribox-fixtures.ts';
+import { blockPanel, connectMatribox, expect, test, turnKnob, openDock } from './matribox-fixtures.ts';
 
 const gain = (unit: { editBuffer: Uint8Array }) => parseMbPreset(unit.editBuffer).chain[1]!.values[0];
 const KEY = 'pocket-master-editor.matriboxLibrary.v1';
@@ -8,6 +8,7 @@ const POCKET_KEY = 'pocket-master-editor.presetLibrary.v1';
 
 test('keep the sound, change it, load the kept tone back into the edit buffer, and Undo returns the change; no slot is written', async ({ page, unit }) => {
   await connectMatribox(page);
+  await openDock(page, 'Library');
   const stored = toHex(unit.stored(66)!);
   const library = page.getByRole('region', { name: 'Tone library' });
   await expect(library.getByText('No tones kept yet')).toBeVisible();
@@ -43,6 +44,7 @@ test('keep the sound, change it, load the kept tone back into the edit buffer, a
 
 test('rename, delete, export and import the tone library; the kept tones survive a reload', async ({ page }) => {
   await connectMatribox(page);
+  await openDock(page, 'Library');
   const library = page.getByRole('region', { name: 'Tone library' });
   await library.getByRole('button', { name: 'Keep tone' }).click();
   await expect(library.getByRole('listitem')).toContainText('Drive AD'); // the loaded preset's name by default

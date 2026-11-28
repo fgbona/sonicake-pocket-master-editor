@@ -53,14 +53,19 @@ interface TileProps {
   ledLabel: string;
   onSelect: () => void;
   onToggle: () => void;
+  /** A gear drawing (RigIcon) in place of the module icon. */
+  drawing?: ReactNode;
+  /** Its stored values differ from the edit buffer's: the label of the amber dot that says so. */
+  dirtyLabel?: string;
 }
 
 /** One pedal of the chain: drawing, label, model, and an LED that is its on/off switch. */
-export function PedalTile({ tint, icon, label, model, on, selected, editable, selectLabel, ledLabel, onSelect, onToggle }: TileProps) {
+export function PedalTile({ tint, icon, label, model, on, selected, editable, selectLabel, ledLabel, onSelect, onToggle, dirtyLabel, drawing }: TileProps) {
   return (
-    <div className={`tile ${tint}${on ? '' : ' tile-off'}${selected ? ' tile-selected' : ''}`}>
+    <div className={`tile ${tint}${on ? '' : ' tile-off'}${selected ? ' tile-selected' : ''}${dirtyLabel ? ' tile-dirty' : ''}`}>
+      {dirtyLabel && <span className="tile-dirty-dot" role="img" aria-label={dirtyLabel} title={dirtyLabel} />}
       <button type="button" className="tile-body" aria-pressed={selected} aria-label={selectLabel} onClick={onSelect}>
-        <ModuleIcon blockKey={icon} />
+        {drawing ?? <ModuleIcon blockKey={icon} />}
         <span className="tile-label">{label}</span>
         <span className="tile-model">{model}</span>
       </button>

@@ -154,3 +154,14 @@ export async function connect(page: Page, pedal: SysexPedal) {
   await page.goto('/');
   await expect(loadedPreset(page, pedal)).toBeVisible();
 }
+
+/**
+ * Opens a tab of the workstation dock (Assistant, Clones & IRs, Controls…) when the shell shows the
+ * dock's tabs (1280 px and up); below that every panel is on the page already. Call it once the
+ * pedal's preset shows.
+ */
+export async function openDock(page: Page, name: string) {
+  const tab = page.getByRole('tab', { name, exact: true });
+  if (!(await tab.isVisible())) return;
+  if ((await tab.getAttribute('aria-selected')) !== 'true') await tab.click();
+}

@@ -65,6 +65,8 @@ export async function measure(page: Page, el: Locator): Promise<ContrastResult |
     if (document.getElementById('contrast-probe-style')) return;
     document.head.append(Object.assign(document.createElement('style'), { id: 'contrast-probe-style', textContent: css }));
   }, PROBE_CSS);
+  // In the middle of the screen, so a sticky bar (the app bar) never covers what is photographed.
+  await el.evaluate((e) => e.scrollIntoView({ block: 'center', inline: 'nearest' }));
   await el.evaluate((e) => e.setAttribute('data-contrast-probe', ''));
   const shot = await el.screenshot({ animations: 'disabled' });
   await el.evaluate((e) => e.removeAttribute('data-contrast-probe'));

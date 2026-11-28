@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { encodeName, presetLabel, USER_PRESETS, NAME_LENGTH, type BackupFile, type Progress } from '@pocket-master/core';
 import { FlowBackups } from './FlowBackups';
 import { useI18n } from './I18n';
+import { RoleButtons } from './workstation/RoleButtons';
 import { Dialog } from './Dialog';
 import { ProgressBar } from './ProgressBar';
 
@@ -116,6 +117,7 @@ export function SaveDialog({ open, presetIndex, names, busy, error: saveError, f
             <span>{t('save.name')}</span>
             <input value={name} maxLength={NAME_LENGTH} onChange={(e) => setName(e.target.value)} aria-invalid={invalid} aria-describedby="save-name-error" autoComplete="off" spellCheck={false} />
           </label>
+          <RoleButtons name={name} max={NAME_LENGTH} onName={setName} />
           {invalid && name.length > 0 && (
             <p className="field-error" id="save-name-error">
               {t('save.nameRule')}

@@ -7,6 +7,7 @@ import type { MbBackup } from '@/lib/matribox';
 import { mbBackupFileName } from '@/lib/matriboxBackups';
 import { Dialog } from './Dialog';
 import { useI18n } from './I18n';
+import { RoleButtons } from './workstation/RoleButtons';
 
 interface Props {
   open: boolean;
@@ -101,6 +102,7 @@ export function MatriboxSaveDialog({ open, current, names, loadedName, busy, err
             <span>{t('save.name')}</span>
             <input value={name} maxLength={16} onChange={(e) => setName(e.target.value)} aria-invalid={!valid} autoComplete="off" spellCheck={false} disabled={busy} />
           </label>
+          <RoleButtons name={name} max={16} disabled={busy} onName={setName} />
           {!valid && name.length > 0 && <p className="field-error">{t('mb.nameRule')}</p>}
           <label className="mb-confirm">
             <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} disabled={busy} />

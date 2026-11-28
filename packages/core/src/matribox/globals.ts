@@ -136,9 +136,20 @@ export interface MbGlobalState {
 /** Words: low cut 0..2, then groups of switch, frequency, Q, gain: low shelf, bands 1..4, high shelf; high cut 27..29. */
 const FIRST_GROUP = 3;
 const GROUP = 4;
+const FREQUENCY = 1;
+const Q = 2;
 const GAIN = 3;
+const LOW_CUT_FREQUENCY_WORD = 1;
 const HIGH_CUT = 27;
 const LEVEL_WORD = 30;
+const HIGH_CUT_FREQUENCY_WORD = HIGH_CUT + FREQUENCY;
+const BAND_HZ = [20, 20000] as const;
+const Q_RANGE = [0.1, 10] as const;
+const LOW_CUT_HZ = [20, 1000] as const;
+const HIGH_CUT_HZ = [1000, 20000] as const;
+/** The frequencies that mean a cut is off. */
+export const MB_LOW_CUT_OFF_HZ = 19;
+export const MB_HIGH_CUT_OFF_HZ = 20001;
 export const MB_EQ_BANDS = 4;
 const GAIN_DB = 20;
 const PERCENT = 100;
@@ -171,6 +182,38 @@ export function mbSetGlobalEqGain(band: number, gain: number): Uint8Array {
   if (!Number.isInteger(band) || !inRange(band, 0, MB_EQ_BANDS - 1)) fail(`EQ band must be 0..${MB_EQ_BANDS - 1}, got ${band}`);
   if (!inRange(gain, -GAIN_DB, GAIN_DB)) fail(`EQ gain must be -${GAIN_DB}..${GAIN_DB} dB, got ${gain}`);
   return eqWrite(FIRST_GROUP + (band + 1) * GROUP + GAIN, gain);
+}
+
+const bandWord = (band: number, offset: number) => {
+  if (!Number.isInteger(band) || !inRange(band, 0, MB_EQ_BANDS - 1)) fail(`EQ band must be 0..${MB_EQ_BANDS - 1}, got ${band}`);
+  return FIRST_GROUP + (band + 1) * GROUP + offset;
+};
+
+/**
+ * The centre frequency of EQ band `band` (0..3, words 8, 12, 16, 20), 20..20000 Hz, or of the cut filters:
+ * 'lowCut' (word 1, 20..1000 Hz, 19 = off) and 'highCut' (word 28, 1000..20000 Hz, 20001 = off).
+ * NOT captured from the official editor (unlike the gain and level writes): it follows the documented
+ * word layout and must be checked on the owner's unit.
+ */
+export function mbSetGlobalEqFrequency(target: number | 'lowCut' | 'highCut', hz: number): Uint8Array {
+  if (target === 'lowCut') {
+    if (hz !== MB_LOW_CUT_OFF_HZ && !inRange(hz, ...LOW_CUT_HZ)) fail(`low cut must be ${LOW_CUT_HZ[0]}..${LOW_CUT_HZ[1]} Hz or ${MB_LOW_CUT_OFF_HZ} (off), got ${hz}`);
+    return eqWrite(LOW_CUT_FREQUENCY_WORD, hz);
+  }
+  if (target === 'highCut') {
+    if (hz !== MB_HIGH_CUT_OFF_HZ && !inRange(hz, ...HIGH_CUT_HZ)) fail(`high cut must be ${HIGH_CUT_HZ[0]}..${HIGH_CUT_HZ[1]} Hz or ${MB_HIGH_CUT_OFF_HZ} (off), got ${hz}`);
+    return eqWrite(HIGH_CUT_FREQUENCY_WORD, hz);
+  }
+  const word = bandWord(target, FREQUENCY);
+  if (!inRange(hz, ...BAND_HZ)) fail(`EQ frequency must be ${BAND_HZ[0]}..${BAND_HZ[1]} Hz, got ${hz}`);
+  return eqWrite(word, hz);
+}
+
+/** The Q of EQ band `band` (0..3, words 9, 13, 17, 21), 0.1..10. NOT captured from the official editor: it follows the documented layout, to be checked on the unit. */
+export function mbSetGlobalEqQ(band: number, q: number): Uint8Array {
+  const word = bandWord(band, Q);
+  if (!inRange(q, ...Q_RANGE)) fail(`EQ Q must be ${Q_RANGE[0]}..${Q_RANGE[1]}, got ${q}`);
+  return eqWrite(word, q);
 }
 
 /** The global EQ's level, 0..100 (capture mb-39). */

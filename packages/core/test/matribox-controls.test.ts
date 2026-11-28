@@ -10,6 +10,7 @@ import {
   mbAssignCtrl,
   mbAssignExpression,
   mbAssignQuickKnob,
+  mbClearExpression,
   mbExpressionWrites,
   mbSetExpressionMax,
   mbSetExpressionMin,
@@ -230,4 +231,12 @@ test('BPM is sent as CC 68 (MSB) and CC 69 (LSB), 40..300', () => {
     ],
   );
   for (const bad of [39, 301, 120.5]) assert.throws(() => mbBpmControlChanges(1, bad), RangeError);
+});
+
+test('an expression entry is cleared with slot -1 (none), as the quick knob takes it', () => {
+  const sent = (frame: Uint8Array) => Buffer.from(unwrapMbMessage(parseMbFrame(frame).payload).data);
+  const d = sent(mbClearExpression(4));
+  assert.equal(d.subarray(0, 4).toString('hex'), '02000701');
+  assert.equal(d.subarray(4, 20).toString('hex'), '01000000' + '01000000' + 'ffffffff' + '00000000');
+  assert.throws(() => mbClearExpression(9), /entry must be 0\.\.8/);
 });

@@ -6,6 +6,7 @@ import {
   MB_CATALOG,
   mbAssignments,
   mbAddBlock,
+  mbClearExpression,
   mbExpressionWrites,
   mbAssignCtrl,
   mbAssignQuickKnob,
@@ -20,7 +21,9 @@ import {
   mbSetBlockOn,
   mbSetParam,
   mbSetGlobal,
+  mbSetGlobalEqFrequency,
   mbSetGlobalEqGain,
+  mbSetGlobalEqQ,
   mbSetGlobalEqLevel,
   mbSetPatchVolume,
   mbUploadClone,
@@ -49,7 +52,7 @@ import { applyChain, MbApplyError } from './matriboxOps';
 import { modelOf, type MbChainBlock } from './matriboxPlan';
 import { keepMbBackup, loadMbBackups, storeMbBackups } from './matriboxBackups';
 import { importToSlot } from './matriboxPresetFile';
-import { readGlobals, TEMPO_NOT_ACCEPTED, withEqGain, withEqLevel, withEqOn, withGlobal } from './matriboxGlobals';
+import { readGlobals, TEMPO_NOT_ACCEPTED, withEqFrequency, withEqGain, withEqLevel, withEqOn, withEqQ, withGlobal } from './matriboxGlobals';
 
 export interface MatriboxState {
   readonly unit: MbUnit | null;
@@ -309,6 +312,24 @@ export function useMatribox(port: MidiPort | null) {
       ),
     [sendGlobal],
   );
+  const setEqFrequency = useCallback(
+    (target: number | 'lowCut' | 'highCut', hz: number) =>
+      sendGlobal(
+        `eqFrequency${target}`,
+        (g) => withEqFrequency(g, target, hz),
+        (unit) => unit.write(mbSetGlobalEqFrequency(target, hz)),
+      ),
+    [sendGlobal],
+  );
+  const setEqQ = useCallback(
+    (band: number, q: number) =>
+      sendGlobal(
+        `eqQ${band}`,
+        (g) => withEqQ(g, band, q),
+        (unit) => unit.write(mbSetGlobalEqQ(band, q)),
+      ),
+    [sendGlobal],
+  );
   const setEqOn = useCallback(
     (on: boolean) =>
       sendGlobal(
@@ -536,10 +557,13 @@ export function useMatribox(port: MidiPort | null) {
     assignQuickKnob: (knob: number, target: number | null, paramId: number) => assign(() => mbAssignQuickKnob(knob, target, paramId)),
     assignFrames: (frames: readonly Uint8Array[]) => assign(() => frames),
     assignExpression: (a: MbExpressionAssignment) => assign(() => mbExpressionWrites(a)),
+    clearExpression: (entry: number) => assign(() => [mbClearExpression(entry)]),
     control,
     setGlobal,
     setEqLevel,
     setEqGain,
+    setEqFrequency,
+    setEqQ,
     setEqOn,
     apply,
     save,

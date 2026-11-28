@@ -6,6 +6,7 @@
  */
 import mapJson from './models.json' with { type: 'json' };
 import textJson from './model-text.json' with { type: 'json' };
+import unitsJson from './units.json' with { type: 'json' };
 
 export interface MbParam {
   readonly name: string;
@@ -16,6 +17,8 @@ export interface MbParam {
   readonly step: number;
   /** A switch's or list's label for each step, from min. */
   readonly options?: readonly string[];
+  /** The unit of the value ("ms", "Hz", "st", "cents", "%"); absent when the unit is not certain. */
+  readonly unit?: string;
 }
 
 /** A text in each language of the UI. */
@@ -73,20 +76,37 @@ export interface MbMap {
 /** model-text.json: our name, the real gear (when known) and descriptions of each model, by "MODULE:fxid". */
 export type MbTextMap = Readonly<Record<string, { readonly name: string; readonly gear?: string; readonly en: string; readonly pt: string }>>;
 
+/**
+ * units.json: the unit of a parameter, by "MODULE:Label" (every model of the module with that
+ * control name), or "MODULE:fxid:Label" for one model, which wins. Kept apart from models.json so
+ * that re-running scripts/matribox-map.mjs does not drop it. A parameter without an entry has no unit.
+ */
+export type MbUnits = Readonly<Record<string, string>>;
+
 export const mbTextKey = (module: string, fxid: number) => `${module}:${fxid}`;
 
 /**
  * The catalog of a map and its texts; a model without text is named "<MODULE> <index>" and described by its gear.
  * The gear is our text's `gear` when set, else the map's basedOn.
  */
-export function mbCatalog(map: MbMap, text: MbTextMap): MbCatalog {
+export function mbCatalog(map: MbMap, text: MbTextMap, units: MbUnits = {}): MbCatalog {
   const modules = map.modules.map((m) => {
     const models = m.models.map((a) => {
       const own = text[mbTextKey(m.module, a.fxid)];
       const basedOn = own?.gear || a.basedOn;
-      const params = a.params.map((p) =>
-        Object.freeze({ name: p.label, id: p.id, defaultValue: p.default, min: p.min, max: p.max, step: p.step, ...(p.options ? { options: Object.freeze([...p.options]) } : {}) }),
-      );
+      const params = a.params.map((p) => {
+        const unit = units[`${m.module}:${a.fxid}:${p.label}`] ?? units[`${m.module}:${p.label}`];
+        return Object.freeze({
+          name: p.label,
+          id: p.id,
+          defaultValue: p.default,
+          min: p.min,
+          max: p.max,
+          step: p.step,
+          ...(p.options ? { options: Object.freeze([...p.options]) } : {}),
+          ...(unit ? { unit } : {}),
+        });
+      });
       return Object.freeze({
         fxid: a.fxid,
         index: a.index,
@@ -103,4 +123,4 @@ export function mbCatalog(map: MbMap, text: MbTextMap): MbCatalog {
 }
 
 /** The built-in catalog: every module and model of the unit. */
-export const MB_CATALOG: MbCatalog = mbCatalog(mapJson as MbMap, textJson as MbTextMap);
+export const MB_CATALOG: MbCatalog = mbCatalog(mapJson as MbMap, textJson as MbTextMap, unitsJson as MbUnits);

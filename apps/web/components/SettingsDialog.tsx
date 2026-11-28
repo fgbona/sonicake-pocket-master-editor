@@ -22,6 +22,10 @@ interface Props {
   factoryReset: () => Promise<boolean>;
   /** Called after a factory reset was sent: the pedal reboots and the link is gone. */
   onReset: () => void;
+  /** In the workstation dock's Global & EQ tab instead of a dialog; `open` then means "read and shown". */
+  inline?: boolean;
+  /** Inline only: asks to read them (the tab shows them once asked, so connecting reads nothing extra). */
+  onOpen?: () => void;
 }
 
 type Values = { [K in GlobalSetting]: number | null };
@@ -55,7 +59,7 @@ export function Segmented({ label, value, options, disabled, onChange }: { label
 }
 
 /** Global Options: the Pocket Master's device-wide levels, display and boot anti-touch protection, factory reset. */
-export function SettingsDialog({ open, firmware, onClose, exclusive, writeGlobal, busy, error, factoryReset, onReset }: Props) {
+export function SettingsDialog({ open, firmware, onClose, exclusive, writeGlobal, busy, error, factoryReset, onReset, inline = false, onOpen }: Props) {
   const { t } = useI18n();
   const [values, setValues] = useState<Values | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -84,8 +88,8 @@ export function SettingsDialog({ open, firmware, onClose, exclusive, writeGlobal
     }
   };
   const off = busy || values === null;
-  return (
-    <Dialog open={open} title={t('settings.title')} onClose={onClose} locked={busy}>
+  const content = (
+    <>
       {values === null ? (
         <p className="muted">{busy ? t('settings.reading') : t('settings.unreadable')}</p>
       ) : (
@@ -119,20 +123,9 @@ export function SettingsDialog({ open, firmware, onClose, exclusive, writeGlobal
           </section>
           <section className="settings-group">
             <h3>{t('settings.device')}</h3>
-            <label className="settings-row">
-              <span className="settings-label">{t('settings.backlight')}</span>
-              <input
-                type="range"
-                className="param-slider"
-                min={0}
-                max={100}
-                value={values.backlight ?? 0}
-                disabled={off}
-                onChange={(e) => set('backlight', Number(e.target.value))}
-                style={{ '--fill': `${values.backlight ?? 0}%` } as React.CSSProperties}
-              />
-              <span className="param-value">{values.backlight ?? '—'}</span>
-            </label>
+            <div className="settings-row">
+              <Knob label={t('settings.backlight')} value={values.backlight ?? 0} min={0} max={100} display={String(values.backlight ?? '—')} disabled={off} onChange={(v) => set('backlight', v)} />
+            </div>
             {firmware && (
               <div className="settings-row">
                 <span className="settings-label">{t('settings.firmware')}</span>
@@ -171,6 +164,26 @@ export function SettingsDialog({ open, firmware, onClose, exclusive, writeGlobal
           </section>
         </div>
       )}
+    </>
+  );
+  return inline ? (
+    <section className="panel ws-globals" aria-label={t('settings.title')}>
+      <div className="panel-head">
+        <h2>{t('settings.title')}</h2>
+      </div>
+      <div className="ws-globals-body">
+        {open ? (
+          content
+        ) : (
+          <button type="button" className="btn" disabled={busy} onClick={onOpen}>
+            {t('ws.globalsRead')}
+          </button>
+        )}
+      </div>
+    </section>
+  ) : (
+    <Dialog open={open} title={t('settings.title')} onClose={onClose} locked={busy}>
+      {content}
       {error && !busy && (
         <p className="alert" role="alert">
           {error}

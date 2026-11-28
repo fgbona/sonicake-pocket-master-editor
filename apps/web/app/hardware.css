@@ -1,0 +1,344 @@
+/* The workstation's visual system (docs/design/workstation-ui.md, "Visual system"): the editor drawn as a
+   piece of hardware. A near-black chassis with grain, panels as machined sections (soft bevels, inner
+   shadow, no web cards), keys instead of pills, a dark OLED for the preset, a pedalboard for the chain,
+   lit buttons for switches and recessed selectors. Loaded last: it styles, workstation.css lays out.
+   `:root:root` lifts a rule over the dark-theme rules in globals.css (`:root[data-theme='dark'] .x`). */
+
+/* ── Chassis ─────────────────────────────────────────────────────────────────────────────── */
+:root {
+  --knob-cap: url(#knob-chrome);
+  --ws-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --ws-bevel: inset 0 1px 0 var(--ws-edge-hi), inset 0 -1px 0 var(--ws-edge-lo);
+  --ws-key: linear-gradient(180deg, var(--ws-panel-2), var(--ws-panel));
+}
+:root[data-theme='dark'] { --knob-cap: url(#knob-dark); --knob-pointer: #f2f4f6; }
+/* The chassis carries a fine grain (under the panels, never over text that has its own background). */
+:root:root[data-theme='dark'] body { background: var(--ws-grain) fixed, radial-gradient(1600px 900px at 50% -30%, #17191d 0%, var(--ws-chassis) 62%) fixed var(--ws-chassis); }
+:root:root[data-theme='light'] body { background: var(--ws-grain) fixed, linear-gradient(180deg, #dfe2e5, var(--ws-chassis)) fixed var(--ws-chassis); }
+
+/* ── Type: condensed technical labels, a fixed-width readout face for values ──────────────── */
+:is(.tile-label, .knob-label, .editor-label, .mb-bank-label, .eyebrow, .ws-dock-tabs [role='tab'], .ws-dock-fold,
+  .panel-head h2, .sheet-title, .ws-fs-label, .ws-roles legend, .brand, .field > span:first-child) {
+  font-family: var(--font-label-stack); text-transform: uppercase; letter-spacing: 0.12em;
+}
+:is(.knob-value, .tile-model, .sidebar-badge, .ws-fs-what, .mb-dsp-load, .preset-number, .ws-lcd-bank, .ws-role-chip, .ws-sync) {
+  font-family: var(--font-readout-stack); font-variant-numeric: tabular-nums;
+}
+
+/* ── Keys: every button a hardware key with travel ────────────────────────────────────────── */
+:root:root .btn {
+  border: 0; border-radius: 5px; color: var(--ws-ink); background: var(--ws-key);
+  box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 3px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-label-stack); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+  transition: transform 90ms var(--ws-ease), box-shadow 140ms var(--ws-ease), filter 140ms var(--ws-ease);
+}
+:root:root[data-theme='light'] .btn { box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.15); }
+:root:root .btn:hover:not(:disabled) { filter: brightness(1.12); }
+:root:root .btn:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.5); }
+/* The primary key is lit: amber legend and rim on a dark key, the stage's one accent (10:1). */
+:root:root .btn-primary { color: #ffcf6b; background: var(--ws-key) var(--ws-panel); box-shadow: var(--ws-bevel), 0 0 0 1px #e8970c, 0 0 16px rgba(255, 178, 36, 0.3); text-shadow: 0 0 8px rgba(255, 178, 36, 0.45); }
+:root:root[data-theme='light'] .btn-primary { color: #fff; background: linear-gradient(180deg, #9a5a00, #7a4600) #7a4600; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.3); }
+:root:root .btn-danger { color: #fff; background: linear-gradient(180deg, #d4322a, #a81f19) #a81f19; }
+.btn:focus-visible, .switch:focus-visible, select:focus-visible, .tile-body:focus-visible, .tile-led:focus-visible, .ws-fs:focus-visible {
+  outline: 2px solid var(--ws-amber); outline-offset: 2px;
+}
+
+/* ── Switches: a lit button with an LED, not a sliding toggle (same role="switch") ───────── */
+:root:root .switch {
+  width: 46px; height: 28px; border-radius: 5px; background: var(--ws-key);
+  box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.55), 0 2px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 90ms var(--ws-ease);
+}
+:root:root .switch:active:not(:disabled) { transform: translateY(1px); }
+:root:root .switch-knob {
+  top: 50%; left: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%);
+  background: var(--ws-led-off); box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.6);
+  transition: background 160ms var(--ws-ease), box-shadow 160ms var(--ws-ease);
+}
+:root:root .switch-on { background: var(--ws-key); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 12px rgba(61, 220, 111, 0.25); }
+:root:root .switch-on .switch-knob { transform: translate(-50%, -50%); background: var(--ws-green); box-shadow: 0 0 6px var(--ws-green), 0 0 14px color-mix(in srgb, var(--ws-green) 60%, transparent); }
+.switch:disabled { opacity: 0.45; cursor: default; }
+
+/* ── Selectors and fields: recessed, a readout inside ─────────────────────────────────────── */
+:root:root :is(.param-select, .field select, .field input, .sidebar-search, .mb-control select) {
+  border: 0; border-radius: 4px; color: var(--ws-ink); background-color: var(--ws-recess);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 1px 0 var(--ws-edge-hi);
+}
+:root:root :is(.param-select, .field select, .mb-control select) {
+  appearance: none; padding: 6px 30px 6px 10px; font-family: var(--font-readout-stack); font-size: 0.8125rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ws-ink-2) 50%), linear-gradient(135deg, var(--ws-ink-2) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size: 5px 5px; background-repeat: no-repeat;
+}
+:root[data-theme='light'] :is(.param-select, .field select, .field input, .sidebar-search, .mb-control select) { background-color: #f7f8f9; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22); }
+
+/* ── App bar ──────────────────────────────────────────────────────────────────────────────── */
+:root:root .toolbar { background: linear-gradient(180deg, #111316, #0b0c0e); border-bottom: 1px solid #000; box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.04); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:root:root[data-theme='light'] .toolbar { background: linear-gradient(180deg, #eceef0, #dcdfe2); border-bottom-color: #b9bdc2; }
+:root:root .brand { color: var(--ws-ink); text-shadow: none; font-weight: 700; letter-spacing: 0.18em; }
+:root:root .brand-mark { color: var(--ws-amber); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ws-amber) 70%, transparent)); }
+:root:root .brand-pedal { font-family: var(--font-label-stack); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ws-ink-2); }
+:root:root .theme-toggle, :root:root .lang-switch { background: var(--ws-recess); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5); border-radius: 5px; }
+:root:root .lang-switch button { border-radius: 4px; font-family: var(--font-label-stack); letter-spacing: 0.1em; }
+:root:root .lang-switch button.lang-on { background: var(--ws-key); color: var(--ws-ink); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.4); }
+:root:root .status { font-family: var(--font-label-stack); text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* ── Preset display: the unit's OLED, dark glass in both themes ───────────────────────────── */
+:root:root .preset-head > div:first-child {
+  position: relative; border-radius: 6px; background: var(--ws-display); color: var(--ws-display-ink);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 0 3px #000, 0 0 0 4px var(--ws-edge-hi);
+  overflow: hidden;
+}
+:root:root .preset-head > div:first-child .eyebrow { color: var(--ws-display-dim); font-size: 0.75rem; letter-spacing: 0.16em; text-shadow: none; }
+/* No glow on the display's text: a solid screen keeps its contrast measurable (axe) and crisp. */
+:root:root .preset-head .preset-name { color: var(--ws-display-ink); text-shadow: none; letter-spacing: 0; }
+:root:root .preset-head .preset-number { font-size: 1.2em; margin-right: 0.35em; color: #ffffff; text-shadow: none; }
+:root:root .preset-head .preset-title { color: var(--ws-display-ink); font-family: var(--font-label-stack); font-weight: 600; letter-spacing: 0.02em; }
+.ws-lcd-tags { display: inline-flex; align-items: center; gap: 10px; }
+.ws-lcd-bank { color: var(--ws-display-dim); font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; }
+:root:root .preset-head .ws-role-chip { background: transparent; }
+:root:root .preset-head .mb-style { background: rgba(255, 255, 255, 0.08); color: var(--ws-display-dim); }
+/* Sync: an LED and its word on the display. */
+:root:root .preset-head .ws-sync { background: transparent; padding: 0; color: var(--ws-display-ink); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ws-sync-dot { box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5); }
+:root:root .preset-head .ws-sync-dirty { color: #ffcf73; }
+
+/* ── Bank browser ─────────────────────────────────────────────────────────────────────────── */
+:root:root .sidebar { background: var(--ws-panel); box-shadow: var(--ws-bevel); border-right: 1px solid #000; }
+:root:root[data-theme='light'] .sidebar { border-right-color: #b9bdc2; }
+:root:root .mb-bank-label { color: var(--ws-ink-2); font-size: 0.75rem; letter-spacing: 0.18em; padding-top: 6px; }
+:root:root .sidebar-item { border-radius: 4px; transition: background 120ms var(--ws-ease); }
+:root:root .sidebar-item:hover:not(:disabled) { background: rgba(255, 255, 255, 0.045); }
+:root:root[data-theme='light'] .sidebar-item:hover:not(:disabled) { background: rgba(0, 0, 0, 0.05); }
+:root:root .sidebar-item.is-current { background: color-mix(in srgb, var(--ws-amber) 13%, transparent); box-shadow: inset 3px 0 0 var(--ws-amber); }
+:root:root .sidebar-badge { border-radius: 3px; background: var(--ws-recess); color: var(--ws-ink-2); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5); font-weight: 400; font-size: 0.75rem; }
+:root:root .sidebar-item.is-current .sidebar-badge { background: var(--ws-display); color: var(--ws-display-ink); }
+:root:root[data-theme='light'] .sidebar-badge { background: #f7f8f9; color: var(--ws-ink-2); }
+:root:root[data-theme='light'] .sidebar-item.is-current .sidebar-badge { background: var(--ws-display); color: var(--ws-display-ink); }
+:root:root .ws-role-chip { border-radius: 3px; font-size: 0.6875rem; font-weight: 400; letter-spacing: 0.08em; background: transparent; }
+
+/* ── Chain: a pedalboard of square blocks, a lit cable, IN and OUT jacks ──────────────────── */
+:root:root .tile {
+  border: 0; border-radius: 6px;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--tint) 20%, #1a1d21) 0%, #121417 62%);
+  box-shadow: inset 0 3px 0 var(--tint), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.7), 0 8px 16px rgba(0, 0, 0, 0.5);
+  transition: transform 140ms var(--ws-ease), box-shadow 180ms var(--ws-ease);
+}
+:root:root[data-theme='light'] .tile {
+  background: linear-gradient(165deg, color-mix(in srgb, var(--tint) 12%, #ffffff) 0%, #eef0f2 62%);
+  box-shadow: inset 0 3px 0 var(--tint), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.14);
+}
+/* Bypassed: the face goes dark and the LED out; the names stay readable. */
+:root:root .tile-off { background: #121417; box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.7), 0 4px 10px rgba(0, 0, 0, 0.45); }
+:root:root[data-theme='light'] .tile-off { background: #e3e5e8; box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.16); }
+:root:root .tile-off .rig-icon { opacity: 0.35; filter: grayscale(1); }
+/* Selected: the block lights up in its colour. */
+:root:root .tile-selected {
+  transform: translateY(-2px);
+  box-shadow: inset 0 3px 0 var(--tint), 0 0 0 2px var(--tint), 0 0 26px 2px color-mix(in srgb, var(--tint) 55%, transparent), 0 10px 20px rgba(0, 0, 0, 0.5);
+}
+:root:root .tile-label { font-size: 0.8125rem; font-weight: 700; }
+:root:root .tile-model { font-size: 0.75rem; color: var(--ws-ink-2); }
+:root:root[data-theme='dark'] .tile:not(.tile-off) .tile-label { color: color-mix(in srgb, var(--tint) 70%, #fff); }
+/* The LED is the bypass switch: a lit dot in a 40 x 20 target. */
+:root:root .tile-led {
+  width: 40px; height: 20px; border-radius: 10px;
+  background: radial-gradient(circle, var(--ws-led-off) 4.5px, transparent 5.5px), rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); transition: background 160ms var(--ws-ease), box-shadow 160ms var(--ws-ease);
+}
+:root:root[data-theme='light'] .tile-led { background: radial-gradient(circle, var(--ws-led-off) 4.5px, transparent 5.5px), rgba(0, 0, 0, 0.08); }
+:root:root .tile-led.is-on {
+  background: radial-gradient(circle, #fff 1.5px, var(--tint) 3px, var(--tint) 4.5px, transparent 6px), rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 10px color-mix(in srgb, var(--tint) 65%, transparent);
+}
+:root:root .mb-tile-add { background: transparent; box-shadow: none; border: 1.5px dashed color-mix(in srgb, var(--ws-ink) 22%, transparent); color: var(--ws-ink-2); }
+:root:root .mb-tile-add:hover:not(:disabled) { border-color: var(--ws-amber); color: var(--ws-ink); }
+:root:root .tile-dirty-dot { box-shadow: 0 0 0 2px #000, 0 0 8px var(--ws-amber); }
+:root:root .mb-snake-line path { stroke: var(--ws-amber); stroke-width: 3; filter: drop-shadow(0 0 4px rgba(255, 178, 36, 0.5)); }
+:root:root[data-theme='light'] .mb-snake-line path { stroke: #8b9097; filter: none; }
+
+/* ── Footswitches: stomp caps with LED rings ──────────────────────────────────────────────── */
+.ws-fs-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ws-fs {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-items: center;
+  min-height: 56px; padding: 6px 10px; border: 0; border-radius: 6px; text-align: left; cursor: pointer; color: var(--ws-ink);
+  background: var(--ws-panel); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='light'] .ws-fs { box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.14); }
+.ws-fs:disabled { cursor: default; }
+.ws-fs-ring {
+  grid-row: 1 / 3; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #5b616a, #24272c 70%); box-shadow: 0 0 0 3px #0a0b0d, 0 0 0 5px var(--ws-led-off), 0 3px 6px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 180ms var(--ws-ease), transform 90ms var(--ws-ease);
+}
+.ws-fs-cap { font-family: var(--font-label-stack); font-weight: 700; color: #f2f4f6; font-size: 0.9375rem; }
+.ws-fs.is-on .ws-fs-ring { box-shadow: 0 0 0 3px #0a0b0d, 0 0 0 5px var(--tint, var(--ws-green)), 0 0 16px 3px color-mix(in srgb, var(--tint, var(--ws-green)) 55%, transparent); }
+.ws-fs:active:not(:disabled) .ws-fs-ring { transform: scale(0.94); }
+.ws-fs-label { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.12em; }
+.ws-fs-what { font-size: 0.75rem; color: var(--ws-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-fs:is(:disabled, .is-static) .ws-fs-label { color: var(--ws-ink-2); }
+.ws-fs.is-static { cursor: default; }
+
+/* ── Block panel: a hardware page under the chain ─────────────────────────────────────────── */
+:root:root .editor {
+  border: 0; border-radius: 6px; background: var(--ws-panel); -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: inset 0 3px 0 var(--tint), var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 -10px 30px -18px var(--tint);
+}
+:root:root[data-theme='light'] .editor { box-shadow: inset 0 3px 0 var(--tint), var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.14); }
+:root:root .editor-off { box-shadow: inset 0 3px 0 var(--ws-led-off), var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.6); }
+:root:root .editor-label { font-size: 0.9375rem; letter-spacing: 0.18em; }
+/* The model selector: a recessed readout with a chevron, like a menu on the unit's screen. */
+:root:root .editor-head .picker-button {
+  border: 0; border-radius: 4px; padding: 8px 32px 8px 12px; background: var(--ws-display); color: var(--ws-display-ink);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+:root:root .editor-head .picker-button .picker-name { font-family: var(--font-readout-stack); font-size: 1rem; }
+:root:root .editor-head .picker-button .picker-detail { color: var(--ws-display-dim); }
+:root:root .editor-head .picker-button::after { border-color: var(--ws-display-dim); }
+/* Knobs: a dark machined cap, a lit arc in the block's colour, the value on a small readout. */
+:root:root .knob-track { stroke: rgba(0, 0, 0, 0.55); stroke-width: 6; }
+:root:root[data-theme='light'] .knob-track { stroke: rgba(0, 0, 0, 0.14); }
+:root:root .knob-arc { stroke-width: 4; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--tint, var(--ws-amber)) 75%, transparent)); }
+:root:root .knob-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; color: var(--ws-ink-2); }
+:root:root .editor-face:not(.face-amp) .knob-value, :root:root .fields .knob-value {
+  font-size: 0.9375rem; font-weight: 400; color: var(--ws-display-ink); background: var(--ws-display);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8); border-radius: 3px; min-width: 5ch;
+}
+:root:root .editor-face:not(.face-amp) button.knob-value:hover { background: #0b1114; }
+.ws-param-pages { display: flex; gap: 6px; margin: 0 0 14px; }
+.ws-param-pages button {
+  min-height: 32px; padding: 0 12px; border: 0; border-radius: 4px; cursor: pointer; color: var(--ws-ink-2); background: var(--ws-recess);
+  font-family: var(--font-label-stack); text-transform: uppercase; letter-spacing: 0.1em; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.ws-param-pages button[aria-pressed='true'] { color: var(--ws-ink); background: var(--ws-key); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 -2px 0 var(--tint); }
+:root:root .editor-face:not(.face-amp) .editor-info { background: var(--ws-recess); color: var(--ws-ink-2); border-radius: 4px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4); }
+:root:root[data-theme='light'] .editor-face:not(.face-amp) .editor-info { background: #f7f8f9; }
+:root:root .mb-dsp-bar { background: var(--ws-recess); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); border-radius: 2px; }
+:root:root .mb-dsp-fill { border-radius: 2px; box-shadow: 0 0 8px currentColor; }
+
+/* ── Dock and its sections ────────────────────────────────────────────────────────────────── */
+:root:root .ws-dock-tabs [role='tab'], :root:root .ws-dock-fold { border-radius: 4px; letter-spacing: 0.14em; transition: background 120ms var(--ws-ease), box-shadow 160ms var(--ws-ease); }
+:root:root .ws-dock-tabs [role='tab'][aria-selected='true'] { background: var(--ws-key); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 -3px 0 var(--ws-amber); }
+:root:root :is(.panel, .empty, .log) {
+  border: 0; border-radius: 6px; background: var(--ws-panel-2); -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+:root:root[data-theme='light'] :is(.panel, .empty, .log) { box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.12); }
+:root:root .panel-head { border-bottom: 1px solid rgba(0, 0, 0, 0.45); box-shadow: 0 1px 0 var(--ws-edge-hi); }
+:root:root[data-theme='light'] .panel-head { border-bottom-color: rgba(0, 0, 0, 0.12); }
+:root:root .panel-head h2 { font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.16em; }
+.panel-head h2::before {
+  content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 10px 2px 0; border-radius: 50%;
+  background: var(--ws-amber); box-shadow: 0 0 6px var(--ws-amber); vertical-align: middle;
+}
+:root:root .sheet { border: 0; border-radius: 8px; background: var(--ws-panel); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.7), 0 30px 80px rgba(0, 0, 0, 0.6); }
+:root:root .sheet-title { font-size: 1.125rem; letter-spacing: 0.16em; }
+:root:root .mb-banner { border-radius: 4px; background: color-mix(in srgb, var(--ws-amber) 8%, var(--ws-panel)); border-left-color: var(--ws-amber); font-size: 0.8125rem; }
+
+/* ── Motion: quick and tactile; none for those who ask for less ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root:root :is(.btn, .switch, .switch-knob, .tile, .tile-led, .ws-fs-ring, .sidebar-item, .ws-dock-tabs [role='tab']) { transition: none; }
+  :root:root .tile-selected { transform: none; }
+}
+
+/* ── Segmented selectors: a row of interlocked keys in a recess; the chosen one lit ───────── */
+:root:root .segmented { border-radius: 5px; padding: 3px; gap: 3px; background: var(--ws-recess); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); }
+:root:root .segmented button {
+  border-radius: 3px; color: var(--ws-ink-2); font-family: var(--font-label-stack); text-transform: uppercase; letter-spacing: 0.1em;
+  transition: background 120ms var(--ws-ease), color 120ms var(--ws-ease);
+}
+:root:root .segmented button.is-on, :root:root .segmented button[aria-checked='true'] {
+  color: var(--ws-ink); background: var(--ws-key); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 -2px 0 var(--ws-amber);
+}
+:root:root[data-theme='light'] .segmented { background: #c9cdd2; }
+
+/* Light theme: the alloy is light, so tinted names and keys get darker ink to stay at AA. */
+:root:root[data-theme='light'] .tile:not(.tile-off) .tile-label { color: color-mix(in srgb, var(--tint) 70%, #000); }
+:root:root[data-theme='light'] .editor-label { color: color-mix(in srgb, var(--tint) 75%, #000); }
+:root:root[data-theme='light'] :is(.theme-toggle, .lang-switch) { background: #f3f4f6; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2); }
+:root:root[data-theme='light'] .lang-switch button { color: #3f444b; }
+:root:root[data-theme='light'] .segmented button.is-on, :root:root[data-theme='light'] .segmented button[aria-checked='true'] { box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.25); }
+:root:root[data-theme='light'] .segmented button { color: #3f444b; }
+:root:root[data-theme='light'] .mb-banner { color: var(--ws-ink-2); }
+:root:root[data-theme='light'] .btn-link { color: #2f3338; }
+/* The sync line never changes the display's height while it reads, below the shell: it keeps a line of its own. */
+@media (max-width: 1279px), (max-height: 799px) {
+  :root:root .preset-head .ws-sync { display: flex; flex-basis: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+:root:root[data-theme='light'] .mb-dsp-load { color: var(--ws-ink-2); }
+/* The display's lines never wrap: their height does not depend on which font has loaded yet. */
+:root:root .preset-head > div:first-child :is(.eyebrow, .preset-name, .ws-lcd-tags) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+:root:root .preset-head .preset-name { display: block; line-height: 1.15; }
+/* Touch screens: the row under each block keeps the room of its move arrows while the editor is busy too,
+   so the chain does not jump when it becomes editable. */
+@media (hover: none) {
+  .tiles .tile-unit { padding-bottom: 26px; }
+}
+/* A block brought into view keeps a little room around it, clear of the screen's edge. */
+.tile, .mb-tile-add { scroll-margin: 16px; }
+
+/* ── The experimental notice as an LED with a tooltip, in the preset bar ──────────────────── */
+.ws-status-led { position: relative; display: inline-flex; }
+.ws-status-led-button {
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 5px; cursor: help;
+  background: var(--ws-recess); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='light'] .ws-status-led-button { background: #f3f4f6; }
+.ws-status-led-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ws-amber); box-shadow: 0 0 8px var(--ws-amber); }
+.ws-status-led-button:focus-visible { outline: 2px solid var(--ws-amber); outline-offset: 2px; }
+.ws-status-led-tip {
+  position: absolute; z-index: 20; top: calc(100% + 8px); left: 0; width: max-content; max-width: min(360px, 80vw);
+  padding: 10px 12px; border-radius: 5px; font-size: 0.8125rem; line-height: 1.4; color: var(--ws-ink);
+  background: var(--ws-panel-2); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 12px 28px rgba(0, 0, 0, 0.5);
+  visibility: hidden; opacity: 0; transition: opacity 140ms var(--ws-ease), visibility 0s linear 140ms;
+}
+.ws-status-led:hover .ws-status-led-tip, .ws-status-led:focus-within .ws-status-led-tip { visibility: visible; opacity: 1; transition: opacity 140ms var(--ws-ease); }
+@media (prefers-reduced-motion: reduce) { .ws-status-led-tip { transition: none; } }
+
+/* ── Block panel fill: the screen (or the gear) beside a centred row of knobs ─────────────── */
+.ws-face-row.has-visual { display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); gap: 18px 32px; align-items: center; }
+.ws-face-row.has-visual > .editor-params { justify-content: center; }
+.face-amp .ws-face-row { display: contents; }
+.ws-face-visual {
+  display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 120px; padding: 12px; border-radius: 5px;
+  background: var(--ws-display); box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.ws-face-visual .viz-screen { width: 100%; height: auto; }
+.ws-face-visual:has(.viz-screen) { padding: 0; background: none; box-shadow: none; }
+.ws-face-model { font-family: var(--font-readout-stack); font-size: 0.9375rem; color: var(--ws-display-ink); text-align: center; }
+/* The model's description: a quiet secondary line under the knobs, not a box. */
+:root:root .editor-face:not(.face-amp) .editor-info { margin: 12px 0 0; padding: 0; background: none; box-shadow: none; font-size: 0.75rem; line-height: 1.45; color: var(--ws-ink-2); max-width: 90ch; }
+@media (max-width: 720px) {
+  .ws-face-row.has-visual { grid-template-columns: minmax(0, 1fr); }
+  .ws-face-visual { min-height: 0; }
+  .ws-face-visual:not(:has(.viz-screen)) { display: none; }
+}
+
+/* ── Global & EQ tab: the unit's settings pages side by side, the EQ display first and wide ──── */
+.ws-globals { background: transparent; box-shadow: none; }
+:root:root .ws-globals { background: transparent; box-shadow: none; }
+.ws-globals-body { padding: 4px 0 0; }
+.ws-globals .settings {
+  max-height: none; overflow: visible; padding: 0; display: grid; gap: 14px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.ws-globals .settings-group {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 18px; padding: 14px 16px; border-radius: 6px;
+  background: var(--ws-panel-2); box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme='light'] .ws-globals .settings-group { box-shadow: var(--ws-bevel), 0 0 0 1px rgba(0, 0, 0, 0.12); }
+.ws-globals .settings-group > :is(h3, p, .settings-row:not(.settings-knob), summary, .muted) { flex-basis: 100%; }
+.ws-globals .settings-group h3, .ws-globals .settings-group summary h3 { font-family: var(--font-label-stack); letter-spacing: 0.16em; color: var(--ws-ink-2); }
+.ws-globals details.settings-group { display: flex; }
+.ws-globals details.settings-group:not([open]) > :not(summary) { display: none; }
+/* The EQ: first, across the whole tab. */
+.ws-globals .settings-group:has(.eq-panel) { grid-column: 1 / -1; order: -1; }
+.ws-globals .settings-group:has(.eq-panel) .eq-panel { flex-basis: 100%; }
+.ws-globals .settings-knob { flex: none; }
+/* Wide: the EQ display on the left, its ON/Level and Freq/Q/Gain strip on the right, like the unit's page. */
+@media (min-width: 1100px) {
+  .ws-globals .eq-panel { display: grid; grid-template-columns: minmax(380px, 1.15fr) minmax(0, 1fr); column-gap: 24px; row-gap: 12px; align-items: start; }
+  .ws-globals .eq-plot { grid-column: 1; grid-row: 1 / span 3; width: 100%; }
+  .ws-globals .eq-hint { grid-column: 1; }
+  .ws-globals .eq-panel > :not(.eq-plot, .eq-hint) { grid-column: 2; }
+  .ws-globals .eq-panel { grid-auto-flow: row dense; }
+}

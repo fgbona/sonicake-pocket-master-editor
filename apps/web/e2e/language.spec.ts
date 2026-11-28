@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures.ts';
+import { test, expect, openDock } from './fixtures.ts';
 import type { Page } from '@playwright/test';
 import { en, pt } from '../lib/messages.ts';
 import { openAssistantChat } from './assistant-chat.ts';
@@ -59,6 +59,7 @@ test('the whole editor speaks Portuguese', async ({ page, pedal }) => {
 
   await page.evaluate(() => window.__midi.plug('Pocket Master'));
   await expect(page.getByRole('heading', { name: new RegExp(`P09\\s*${pedal.pedal.names[8]}`) })).toBeVisible();
+  await openDock(page, pt['ws.rack.backups']);
   await page.getByRole('button', { name: pt['log.show'] }).click();
   await expectPortuguese(page, 'connected, with the SysEx log');
 
@@ -72,6 +73,7 @@ test('the whole editor speaks Portuguese', async ({ page, pedal }) => {
       save: pt['assistant.saveKey'],
       input: pt['assistant.inputAria'],
       send: pt['assistant.send'],
+      tab: pt['ws.rack.assistant'],
     },
     'Montei um Rectifier.',
   );
@@ -86,6 +88,6 @@ test('the whole editor speaks Portuguese', async ({ page, pedal }) => {
   await page.getByRole('button', { name: pt['action.cancel'] }).click();
 
   await page.getByRole('button', { name: pt['settings.open'] }).click();
-  await expect(page.getByRole('dialog', { name: pt['settings.title'] })).toBeVisible();
+  await expect(page.getByRole('region', { name: pt['settings.title'] })).toBeVisible();
   await expectPortuguese(page, 'global options');
 });

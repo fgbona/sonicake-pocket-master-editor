@@ -1,4 +1,4 @@
-import { test, expect, connect } from './fixtures.ts';
+import { test, expect, connect, openDock } from './fixtures.ts';
 import type { Page } from '@playwright/test';
 
 // The desktop app's AI connection, editor side. The desktop preload is faked here (the real one is
@@ -50,6 +50,7 @@ const run = (page: Page, name: string, args: unknown) => page.evaluate(([n, a]) 
 
 test('the web editor has no AI connection panel', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Assistant');
   await expect(page.getByRole('region', { name: 'Tone assistant' })).toBeVisible();
   await expect(panel(page)).toHaveCount(0);
 });
@@ -57,6 +58,7 @@ test('the web editor has no AI connection panel', async ({ page, pedal }) => {
 test('desktop: off by default; turned on it shows the endpoint, the masked token and the Claude Code command', async ({ page, pedal }) => {
   await page.addInitScript(fakeDesktop);
   await connect(page, pedal);
+  await openDock(page, 'Backups');
   const ai = panel(page);
   const toggle = ai.getByRole('checkbox', { name: 'Allow an AI client on this computer to connect' });
   await ai.locator('summary').click(); // folded while off

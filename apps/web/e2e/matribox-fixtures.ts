@@ -6,7 +6,7 @@
 import { test as base, expect, type Locator, type Page } from '@playwright/test';
 import { FakeMatribox } from '../../../packages/core/test/fake-matribox.ts';
 import { MB_CATALOG, type MbModel } from '@pocket-master/core';
-import { wireMidi } from './fixtures.ts';
+import { openDock, wireMidi } from './fixtures.ts';
 
 /** The frames the simulated unit answers one frame from the editor with. */
 export async function answer(unit: FakeMatribox, bytes: Uint8Array): Promise<Uint8Array[]> {
@@ -34,7 +34,7 @@ export const test = base.extend<{ unit: FakeMatribox }>({
     { auto: true },
   ], // always: a page here must never reach the real Web MIDI
 });
-export { expect };
+export { expect, openDock };
 
 const builtIn = (module: string, fxid: number): MbModel => {
   const model = MB_CATALOG.modules.find((m) => m.name === module)?.models.find((m) => m.fxid === fxid);

@@ -4,6 +4,8 @@ import { type Block, blockModelLabel, chainUnits, type Edit, moveInChain } from 
 import { PedalTile, TileMove, TileStrip } from './TileStrip';
 import { useI18n } from './I18n';
 import { useTileDrag } from './useTileDrag';
+import { pmRigCategory, rigIconSpec } from '@/lib/rigIcon';
+import { RigIcon } from './rig/RigIcon';
 
 interface Props {
   chain: readonly Block[];
@@ -14,6 +16,8 @@ interface Props {
   irNames: readonly (string | null)[] | null;
   profileNames: readonly (string | null)[] | null;
   ampMode: 'normal' | 'clone';
+  /** Modules whose stored values the edit buffer no longer matches. */
+  dirty?: ReadonlySet<number>;
 }
 
 /**
@@ -21,7 +25,7 @@ interface Props {
  * click selects the block for the editor; in live edit units drag (or move with the arrows), and
  * DRV-AMP-IR-EQ move together.
  */
-export function ChainTiles({ chain, editable, selected, onSelect, onEdit, irNames, profileNames, ampMode }: Props) {
+export function ChainTiles({ chain, editable, selected, onSelect, onEdit, irNames, profileNames, ampMode, dirty }: Props) {
   const { t } = useI18n();
   const order = chain.map((b) => b.module);
   const byModule = new Map(chain.map((b) => [b.module, b]));
@@ -57,6 +61,8 @@ export function ChainTiles({ chain, editable, selected, onSelect, onEdit, irName
                   ledLabel={t(b.on ? 'block.onAria' : 'block.offAria', { block: b.label })}
                   onSelect={() => onSelect(m)}
                   onToggle={() => onEdit({ kind: 'on', module: b.module, on: !b.on })}
+                  dirtyLabel={dirty?.has(m) ? t('ws.blockEdited') : undefined}
+                  drawing={<RigIcon spec={rigIconSpec(pmRigCategory(b, ampMode), `${b.key}:${b.code}`, b.params.length, b.model)} size={56} />}
                 />
               );
             })}

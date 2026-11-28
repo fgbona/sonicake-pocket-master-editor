@@ -1,0 +1,267 @@
+/* Workstation look (docs/design/workstation-ui.md): a dark stage theme with high contrast and big
+   targets, the preset as a hardware display, and the sync and edited states always in sight.
+   Loaded after globals.css and matribox.css; it only overrides tokens and looks, never layout logic. */
+
+:root {
+  /* Workstation tokens (docs/design/workstation-ui.md, "Visual system"). Light: a daylight, brushed-alloy chassis. */
+  --ws-chassis: #d4d7db;
+  --ws-panel: #e7e9ec;
+  --ws-panel-2: #f3f4f6;
+  --ws-recess: #c3c7cc;
+  --ws-edge-hi: rgba(255, 255, 255, 0.75);
+  --ws-edge-lo: rgba(0, 0, 0, 0.18);
+  --ws-ink: #101114;
+  --ws-ink-2: #3f444b;
+  --ws-amber: #8a4f00;   /* edited, not stored: 5.9:1 on white */
+  --ws-green: #1d7a35;
+  --ws-led-off: #8d939b;
+  --ws-cable: #8b9097;
+  /* The display is a screen: dark glass in both themes, pale ink. */
+  --ws-display: #040607;
+  --ws-display-ink: #d9f4ff;
+  --ws-display-dim: #8fb3c2;
+  --ws-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ws-target: 44px;
+  --font-label-stack: var(--font-label, 'Barlow Condensed'), 'Arial Narrow', system-ui, sans-serif;
+  --font-readout-stack: var(--font-readout, 'Share Tech Mono'), ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* Stage: a near-black chassis, panels a step up, recesses a step down. */
+:root[data-theme='dark'] {
+  --bg: #0b0c0e;
+  --surface: #15171a;
+  --surface-2: #1d2024;
+  --label: #f2f4f6;
+  --label-2: #b3b9c1;
+  --label-3: rgba(235, 238, 245, 0.38);
+  --separator: rgba(160, 166, 176, 0.22);
+  --fill: rgba(150, 156, 168, 0.14);
+  --fill-strong: rgba(150, 156, 168, 0.26);
+  --bar: #0e0f12;
+  --ws-chassis: #0b0c0e;
+  --ws-panel: #141619;
+  --ws-panel-2: #1b1e22;
+  --ws-recess: #07080a;
+  --ws-edge-hi: rgba(255, 255, 255, 0.06);
+  --ws-edge-lo: rgba(0, 0, 0, 0.7);
+  --ws-ink: #f2f4f6;
+  --ws-ink-2: #b3b9c1;
+  --ws-amber: #ffb224;
+  --ws-green: #3ddc6f;
+  --ws-led-off: #3a3f46;
+  --ws-cable: #3b4048;
+}
+
+body { background: var(--bg); }
+
+/* Toolbar: a head unit strip. */
+.toolbar { border-bottom: 1px solid var(--separator); }
+.brand-mark { color: var(--ws-amber); }
+
+/* Big targets: a hand on a guitar neck must hit them. A phone keeps the compact sizes its rows are laid out for. */
+/* No fade on enable/disable: the state reads at once (and contrast checks never catch a half-faded button). */
+.btn { transition: transform 100ms ease-out; }
+@media (min-width: 721px) {
+  .btn { min-height: 40px; padding: 8px 18px; font-weight: 600; }
+  .btn-small { min-height: 32px; padding: 5px 14px; }
+  .btn-icon { min-width: 40px; }
+  .theme-toggle { width: 40px; height: 40px; }
+  .lang-switch button { min-height: 34px; padding: 4px 10px; }
+  .sidebar-item { min-height: var(--ws-target); }
+  .sidebar-search { min-height: 40px; }
+  /* Stacked: the display takes the whole first row; the actions and the volume sit under it. */
+  .layout:not(.ws-shell) .preset-head > div:first-child { flex: 1 1 100%; }
+  /* The block panel's knobs are the big ones; knobs in lists keep 72 px. */
+  .editor .knob { min-width: 100px; }
+  .editor .knob-dial, .editor .knob-dial svg { width: 88px; height: 88px; }
+  .editor .editor-params:has(.knob-hint) :is(.knob, .editor-toggle) { grid-template-rows: 1.6em 88px auto 1.2em; }
+  .editor .editor-params:not(:has(.knob-hint)) .editor-toggle > .knob-label { margin-top: 12px; }
+}
+
+/* The preset as the unit's display: slot, name and the sync chip. */
+.preset-head > div:first-child {
+  padding: 12px 18px 14px; border-radius: 12px; min-width: min(100%, 360px);
+  background: var(--ws-display); color: var(--ws-display-ink);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--separator);
+}
+.preset-head > div:first-child .eyebrow, .preset-head > div:first-child .preset-title { color: color-mix(in srgb, var(--ws-display-ink) 78%, transparent); }
+.preset-head .preset-name { font-variant-numeric: tabular-nums; }
+
+/* Sync chip: green in sync, amber edited, grey while reading or sending. */
+.ws-sync {
+  display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 4px 12px; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.02em;
+  background: rgba(127, 127, 127, 0.18); color: inherit;
+}
+.ws-sync-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.ws-sync-synced .ws-sync-dot { background: var(--ws-green); box-shadow: 0 0 8px var(--ws-green); }
+.ws-sync-dirty { background: color-mix(in srgb, var(--ws-amber) 22%, transparent); }
+.ws-sync-dirty .ws-sync-dot { background: var(--ws-amber); box-shadow: 0 0 8px var(--ws-amber); }
+.ws-sync-reading .ws-sync-dot, .ws-sync-writing .ws-sync-dot { animation: busy-pulse 1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .ws-sync .ws-sync-dot { animation: none; } }
+
+/* Chain: pedals on a dark board, the LED easier to hit, an amber dot on an edited block. */
+.tile {
+  background: var(--surface); box-shadow: inset 0 -10px 18px rgba(0, 0, 0, 0.18), var(--shadow);
+  border: 1px solid var(--separator); border-top: 3px solid var(--tint);
+}
+.tile-off { border-top-color: var(--separator); }
+.tile-selected { border-color: var(--tint); border-top-width: 3px; }
+.tile-led { height: 12px; width: 52px; border-radius: 6px; }
+.tile-dirty-dot {
+  position: absolute; top: 6px; right: 6px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--ws-amber); box-shadow: 0 0 0 2px var(--surface), 0 0 8px var(--ws-amber);
+}
+
+/* Block panel: a faceplate under the chain. */
+.editor { border: 1px solid var(--separator); border-top: 4px solid var(--tint); }
+.editor-off { border-top-color: var(--separator); }
+
+/* Knobs: bigger, the value is a button that turns into a field to type in. */
+.knob { min-width: 84px; }
+.knob-dial { width: 72px; height: 72px; }
+.knob-dial svg { width: 72px; height: 72px; }
+.editor-params:has(.knob-hint) :is(.knob, .editor-toggle) { grid-template-rows: 1.6em 72px auto 1.2em; }
+.knob-value {
+  min-height: 1.6em; min-width: 4.5ch; padding: 1px 8px; border: 0; border-radius: 6px;
+  background: transparent; color: inherit; font: inherit; font-size: 0.9375rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; text-align: center;
+}
+button.knob-value { cursor: text; }
+button.knob-value:hover { background: var(--fill); }
+button.knob-value:focus-visible, .knob-input:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 60%, transparent); }
+.knob-input { width: 7ch; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--separator); color: var(--label); }
+.knob-label { font-size: 0.75rem; color: var(--label-2); }
+/* Bottom-aligned rows: the taller dial moves its centre up 4 px, so a switch or list keeps level with it. */
+.editor-params:not(:has(.knob-hint)) .editor-toggle > .knob-label { margin-top: 4px; }
+
+/* Bank browser: banks, the shared prefix, role chips and the edited dot. */
+.mb-bank-label .ws-bank-prefix { color: var(--label); font-weight: 700; }
+.ws-role-chip {
+  flex: none; margin-left: auto; padding: 1px 6px; border-radius: 5px; font-size: 0.625rem; font-weight: 800; letter-spacing: 0.06em;
+  border: 1px solid currentColor; background: var(--surface);
+}
+.ws-role-chip::before { content: attr(data-label); }
+.ws-role-clean { color: var(--cyan); }
+.ws-role-rhy { color: var(--orange); }
+.ws-role-lead { color: var(--red); }
+.ws-dirty-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--ws-amber); }
+.ws-role-chip + .ws-dirty-dot { margin-left: 6px; }
+.sidebar-name + .ws-dirty-dot { margin-left: auto; }
+
+/* Save dialogs: CLEAN / RHY / LEAD buttons that rename the preset within its bank. */
+.ws-roles { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; border: 0; }
+.ws-roles legend { float: left; margin-right: 4px; font-size: 0.8125rem; color: var(--label-2); }
+.ws-role {
+  min-height: 40px; min-width: 72px; padding: 0 12px; border-radius: 9px; border: 1.5px solid currentColor;
+  background: transparent; font-weight: 800; letter-spacing: 0.06em; cursor: pointer;
+}
+.ws-role[aria-pressed='true'] { background: color-mix(in srgb, currentColor 18%, transparent); }
+.ws-role:disabled { opacity: 0.4; cursor: default; }
+
+/* Gear drawings (components/rig/RigIcon.tsx, from the rig view): the outline reads on either theme. */
+:root { --rig-edge: rgba(0, 0, 0, 0.45); }
+:root[data-theme='dark'] { --rig-edge: rgba(255, 255, 255, 0.4); }
+.tile .rig-icon { display: block; }
+.tile-off .rig-icon { opacity: 0.45; filter: grayscale(0.8); }
+
+/* An edited parameter: an amber dot at the control's top right. */
+.knob, .editor-toggle { position: relative; }
+.ws-param-dirty {
+  position: absolute; top: 0; right: 4px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--ws-amber); box-shadow: 0 0 0 2px var(--surface), 0 0 6px var(--ws-amber);
+}
+.ws-role-free { color: var(--label-2); }
+.ws-global { display: grid; gap: 12px; justify-items: start; padding: 16px; }
+.ws-global p { margin: 0; }
+
+/* Dock: real tabs on the workstation shell only. Stacked (below 1280 px) every panel shows. */
+.ws-dock { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.ws-dock-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.ws-dock-bar { display: none; }
+
+/* ── Workstation shell, 1280 x 800 and up: one fixed screen, only the panes scroll. A shorter screen
+   (a 1280 x 720 laptop) gets the stacked layout: the chain and a usable block panel need the height. ──
+   ┌ app bar (toolbar) ───────────────────────────────┐
+   ├ preset bar: display · sync · actions · volume ────┤
+   ├ banks  ┬ notices / chain / DSP ───────────────────┤
+   │        ├ block panel (scrolls)                    │
+   ├ dock: tabs + the open tab (scrolls) ──────────────┘ */
+@media (min-width: 1280px) and (min-height: 800px) {
+  html:has(.ws-shell), html:has(.ws-shell) body { height: 100%; overflow: hidden; }
+  body:has(.ws-shell) { display: flex; flex-direction: column; }
+  body:has(.ws-shell) > :is(.toolbar, .alert) { flex: none; position: static; }
+  .ws-shell {
+    flex: 1; min-height: 0; display: grid; gap: 0; align-items: stretch; align-content: stretch;
+    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr) auto;
+  }
+  .ws-shell > .main, .ws-shell > .main > .preset { display: contents; }
+  .ws-shell > .sidebar {
+    grid-column: 1; grid-row: 2 / 8; position: static; height: auto; min-height: 0;
+    display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+  }
+  .ws-shell > .sidebar > .sidebar-list { flex: 1; min-height: 0; }
+
+  /* Preset bar: one row under the app bar. */
+  .ws-shell .preset-head {
+    grid-column: 1 / -1; grid-row: 1; margin: 0; padding: 8px 20px; flex-wrap: nowrap; align-items: center;
+    background: var(--surface); border-bottom: 1px solid var(--separator);
+  }
+  .ws-shell .preset-head > div:first-child {
+    flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 8px 16px;
+  }
+  .ws-shell .preset-head > div:first-child .eyebrow { flex-basis: 100%; }
+  .ws-shell .preset-head .preset-name { font-size: 1.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-shell .preset-head .ws-sync { margin: 0; }
+  .ws-shell .preset-head .knob { min-width: 64px; }
+  .ws-shell .preset-head .knob-dial, .ws-shell .preset-head .knob-dial svg { width: 48px; height: 48px; }
+  .ws-shell .preset-head .mb-head-end .mb-head-actions { padding-bottom: 0; }
+  .ws-shell .preset-head .mb-head-end { flex-wrap: nowrap; align-items: center; }
+
+  .ws-shell > .main > .alert { grid-column: 2; grid-row: 2; margin: 12px 20px 0; }
+  .ws-shell > .main > :is(.mb-banner, .notice) { grid-column: 2; grid-row: 3; margin: 10px 20px 0; }
+
+  /* Chain: wide, big blocks from IN to OUT. */
+  /* The board: a recessed plate with a dot grid, IN and OUT jacks at its ends. */
+  .ws-shell .preset > .tiles-wrap {
+    grid-column: 2; grid-row: 4; margin: 14px 20px 8px; padding: 18px 64px 14px; border-radius: 6px;
+    background: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.06) 1px, transparent 1.6px) 0 0 / 22px 22px, var(--ws-recess);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6), 0 1px 0 var(--ws-edge-hi);
+  }
+  :root[data-theme='light'] .ws-shell .preset > .tiles-wrap { background: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.08) 1px, transparent 1.6px) 0 0 / 22px 22px, #cfd3d7; }
+  .ws-shell .preset > .tiles-wrap::before, .ws-shell .preset > .tiles-wrap::after {
+    position: absolute; top: 50%; width: 40px; padding-top: 30px; transform: translateY(-50%); text-align: center;
+    font-family: var(--font-label-stack); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; color: var(--ws-ink-2);
+    background: radial-gradient(circle at 50% 12px, #000 5px, #565b63 6px, #2a2d32 10px, #16181b 12px, transparent 13px);
+  }
+  .ws-shell .preset > .tiles-wrap::before { content: 'IN'; left: 14px; }
+  .ws-shell .preset > .tiles-wrap::after { content: 'OUT'; right: 14px; }
+  .ws-shell .tile { width: 116px; min-height: 116px; }
+  .ws-shell .tile .rig-icon { width: 52px; height: 52px; }
+  .ws-shell .preset > .mb-dsp { grid-column: 2; grid-row: 5; margin: 0 20px 6px; }
+
+  /* Block panel: fixed between the chain and the dock; its knobs scroll inside it. */
+  .ws-shell .preset > .ws-fs-strip { grid-column: 2; grid-row: 6; margin: 0 20px 6px; }
+  .ws-shell .preset > .editor { grid-column: 2; grid-row: 7; margin: 6px 20px 12px; min-height: 0; overflow: auto; }
+
+  /* Dock: tabs along the bottom; the open one is a drawer over the block panel, half the screen at most. */
+  .ws-shell .ws-dock { grid-column: 1 / -1; grid-row: 8; gap: 0; background: var(--surface); border-top: 1px solid var(--separator); }
+  .ws-shell .ws-dock-bar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; }
+  .ws-shell .ws-dock-tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+  .ws-shell .ws-dock-tabs [role='tab'], .ws-dock-fold {
+    flex: none; min-height: var(--ws-target); padding: 0 16px; border: 0; border-radius: 9px;
+    background: transparent; color: var(--label); font: inherit; font-weight: 700; cursor: pointer;
+  }
+  .ws-shell .ws-dock-tabs [role='tab']:hover, .ws-dock-fold:hover { background: var(--fill); }
+  .ws-shell .ws-dock-tabs [role='tab'][aria-selected='true'] { background: var(--fill-strong); box-shadow: inset 0 -3px 0 var(--ws-amber); }
+  .ws-shell .ws-dock-tabs [role='tab']:focus-visible, .ws-dock-fold:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 60%, transparent); }
+  .ws-dock-fold { color: var(--label-2); font-weight: 600; }
+  .ws-shell .ws-dock-panel { display: none; }
+  /* The open tab slides up over the block panel as a drawer: the chain stays in sight and the panel keeps its size. */
+  .ws-shell .ws-dock { position: relative; z-index: 3; }
+  .ws-shell .ws-dock-panel.is-active {
+    display: grid; position: absolute; left: 0; right: 0; bottom: 100%; max-height: 48vh; overflow: auto; padding: 16px 20px; gap: 16px;
+    background: var(--ws-panel); box-shadow: 0 -1px 0 var(--ws-edge-hi), 0 -24px 48px rgba(0, 0, 0, 0.55); border-top: 2px solid var(--ws-amber);
+  }
+}

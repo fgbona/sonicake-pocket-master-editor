@@ -5,6 +5,7 @@ import type { MbExpressionAssignment, MbExpressionEntry, MbResolvedBlock } from 
 import type { MessageKey } from '@/lib/i18n';
 import { Fold } from './Fold';
 import { useI18n } from './I18n';
+import { sweepRange } from '@/lib/blockViz';
 
 const round = (n: number) => Number(n.toFixed(2));
 /** Entries a pedal mode holds. */
@@ -128,6 +129,9 @@ function ExpressionRow({
       <button type="button" className="btn btn-small" disabled={disabled || !ready} onClick={() => (slot === null ? onClear(entry.entry) : onApply({ entry: entry.entry, slot, paramId, min, max }))}>
         {t('mb.expApply')}
       </button>
+      <span className="viz-sweep" aria-hidden="true">
+        <span className="viz-sweep-range" style={{ left: `${sweepRange(min, max)[0] * 100}%`, width: `${(sweepRange(min, max)[1] - sweepRange(min, max)[0]) * 100}%` }} />
+      </span>
     </li>
   );
 }

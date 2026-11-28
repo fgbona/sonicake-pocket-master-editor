@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import { presetLabel, USER_PRESETS } from '@pocket-master/core';
 import { Dialog } from './Dialog';
 import { useI18n } from './I18n';
+import { sharedPrefix, slotRole } from '@/lib/workstation/banks';
+import { RoleChip } from './workstation/RoleButtons';
 
 interface Props {
   names: readonly string[] | null;
@@ -15,6 +17,9 @@ interface Props {
 }
 
 type Bank = 'user' | 'factory';
+
+/** The workstation's banks of three (CLEAN, RHY, LEAD): P01–P03 is bank 1. */
+const BANK_SIZE = 3;
 
 /** Factory / user banks, a search and every preset; loading asks first over unsaved changes. */
 export function PresetSidebar({ names, current, modified, disabled, onReadNames, onLoad }: Props) {
@@ -60,20 +65,32 @@ export function PresetSidebar({ names, current, modified, disabled, onReadNames,
           {t('presets.read')}
         </button>
       ) : (
-        <ul className="sidebar-list">
-          {shown.map((p) => (
-            <li key={p.i}>
-              <button
-                type="button"
-                className={`sidebar-item${p.i === current ? ' is-current' : ''}`}
-                disabled={disabled}
-                aria-current={p.i === current ? 'true' : undefined}
-                aria-label={t('presets.loadAria', { label: p.label, name: p.name })}
-                onClick={() => choose(p.i)}
-              >
-                <span className="sidebar-badge">{p.label}</span>
-                <span className="sidebar-name">{p.name}</span>
-              </button>
+        <ul className="sidebar-list mb-banks">
+          {banksOf(shown, bank === 'user' ? 0 : USER_PRESETS).map(({ bank: n, presets }) => (
+            <li key={n} className="mb-bank">
+              <span className="mb-bank-label" id={`pm-bank-${bank}-${n}`}>
+                {t('mb.bank', { n })}
+                {sharedPrefix(presets.map((p) => p.name)) && <span className="ws-bank-prefix"> · {sharedPrefix(presets.map((p) => p.name))}</span>}
+              </span>
+              <ul className="mb-bank-presets" aria-labelledby={`pm-bank-${bank}-${n}`}>
+                {presets.map((p) => (
+                  <li key={p.i}>
+                    <button
+                      type="button"
+                      className={`sidebar-item${p.i === current ? ' is-current' : ''}`}
+                      disabled={disabled}
+                      aria-current={p.i === current ? 'true' : undefined}
+                      aria-label={t('presets.loadAria', { label: p.label, name: p.name })}
+                      onClick={() => choose(p.i)}
+                    >
+                      <span className="sidebar-badge">{p.label}</span>
+                      <span className="sidebar-name">{p.name}</span>
+                      <RoleChip role={p.i < USER_PRESETS ? slotRole(p.i, BANK_SIZE) : null} />
+                      {p.i === current && modified && <span className="ws-dirty-dot" aria-hidden="true" />}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
         </ul>
@@ -98,4 +115,10 @@ export function PresetSidebar({ names, current, modified, disabled, onReadNames,
       </Dialog>
     </aside>
   );
+}
+
+/** The shown presets by bank of three, numbered from the first slot of their list (`first`). */
+function banksOf<T extends { readonly i: number }>(presets: readonly T[], first: number) {
+  const bankOf = (i: number) => Math.floor((i - first) / BANK_SIZE) + 1;
+  return [...new Set(presets.map((p) => bankOf(p.i)))].map((bank) => ({ bank, presets: presets.filter((p) => bankOf(p.i) === bank) }));
 }

@@ -8,7 +8,11 @@ import { AmpDecor } from './AmpDecor';
 import { MatriboxParam } from './MatriboxParam';
 import { ModelPicker } from './ModelPicker';
 import { ModuleIcon } from './ModuleIcon';
+import { BlockScreen, blockHasScreen } from './workstation/BlockScreen';
+import { rigCategory, rigIconSpec } from '@/lib/rigIcon';
+import { RigIcon } from './rig/RigIcon';
 import { useI18n } from './I18n';
+import { useState } from 'react';
 
 interface Props {
   block: MbResolvedBlock;
@@ -22,9 +26,13 @@ interface Props {
   /** Change model names the block's storage slot, not its chain position. */
   onModel: (slot: number, moduleIndex: number, fxid: number) => void;
   onRemove: (position: number) => void;
+  /** Whether a parameter (by widget id) differs from what the unit stores. */
+  paramDirty?: (id: number, value: number) => boolean;
 }
 
 const round = (n: number) => String(Number(n.toFixed(2)));
+/** Knobs on one page of the panel, like the unit's own screen pages; a model with more gets page buttons. */
+const PAGE = 8;
 
 /** The amp's gain as 0..1, for how hot the tube glows; middle when the model has no gain knob. */
 function driveOf(block: MbResolvedBlock): number {
@@ -38,7 +46,7 @@ function driveOf(block: MbResolvedBlock): number {
  * model menu, on/off, every parameter as a knob, switch or small selector, and an AMP dressed like
  * the gear its model is based on.
  */
-export function MatriboxBlockPanel({ block, values, userSlot, disabled, onParam, onOn, onModel, onRemove }: Props) {
+export function MatriboxBlockPanel({ block, values, userSlot, disabled, onParam, onOn, onModel, onRemove, paramDirty }: Props) {
   const { t, lang } = useI18n();
   const key = mbLookKey(block);
   const name = `${block.position}. ${block.module}`;
@@ -52,6 +60,12 @@ export function MatriboxBlockPanel({ block, values, userSlot, disabled, onParam,
   // The faceplate needs the model: an AMP the catalog does not name shows its raw values like any block.
   const amp = key === 'amp' && block.model !== null;
   const skin = amp && block.model ? mbAmpSkin(block.model.basedOn) : null;
+  const pages = Math.ceil(block.params.length / PAGE);
+  // The page, kept per model: another block or model opens on its first page.
+  const [paged, setPaged] = useState({ key: '', page: 0 });
+  const modelKey = `${block.slot}:${block.fxid}`;
+  const page = paged.key === modelKey ? Math.min(paged.page, pages - 1) : 0;
+  const shown = pages > 1 ? block.params.slice(page * PAGE, (page + 1) * PAGE) : block.params;
 
   return (
     <section className={`editor mb-${key}${block.on ? '' : ' editor-off'}`} aria-label={t('editor.aria', { block: name })}>
@@ -90,11 +104,44 @@ export function MatriboxBlockPanel({ block, values, userSlot, disabled, onParam,
           block.params.length === 0 ? (
             <p className="muted small">{t('block.noParams')}</p>
           ) : (
-            <div className="editor-params">
-              {block.params.map((p) => (
-                <MatriboxParam key={p.id} param={p} spec={block.model?.params.find((m) => m.id === p.id)} disabled={disabled} onChange={(v) => onParam(block.slot, p.id, v)} />
-              ))}
-            </div>
+            <>
+              {pages > 1 && (
+                <div className="ws-param-pages" role="group" aria-label={t('ws.paramPages')}>
+                  {Array.from({ length: pages }, (_, i) => (
+                    <button key={i} type="button" aria-pressed={i === page} onClick={() => setPaged({ key: modelKey, page: i })}>
+                      {t('ws.paramPage', { from: i * PAGE + 1, to: Math.min((i + 1) * PAGE, block.params.length) })}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className={amp ? 'ws-face-row' : 'ws-face-row has-visual'}>
+                {/* Beside the knobs: the block's live screen, or its gear drawing and model. */}
+                {!amp && (
+                  <div className="ws-face-visual">
+                    {blockHasScreen(block) ? (
+                      <BlockScreen block={block} />
+                    ) : (
+                      <>
+                        <RigIcon spec={rigIconSpec(rigCategory(block), `${block.moduleIndex}:${block.fxid}`, block.params.length, block.model.name)} size={96} />
+                        <span className="ws-face-model">{block.model.name}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                <div className="editor-params">
+                  {shown.map((p) => (
+                    <MatriboxParam
+                      key={p.id}
+                      param={p}
+                      spec={block.model?.params.find((m) => m.id === p.id)}
+                      disabled={disabled}
+                      dirty={paramDirty?.(p.id, p.value) ?? false}
+                      onChange={(v) => onParam(block.slot, p.id, v)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
           )
         ) : (
           <div className="mb-raw">

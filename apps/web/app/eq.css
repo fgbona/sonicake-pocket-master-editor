@@ -1,0 +1,102 @@
+/* The global EQ graph and its controls (components/workstation/EqGraph.tsx). */
+.eq-panel { display: flex; flex-direction: column; gap: 10px; }
+.eq-plot {
+  position: relative; aspect-ratio: 600 / 260; width: min(100%, 640px); margin-inline: auto;
+  background: var(--ws-display); border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--ws-edge-lo), inset 0 2px 10px #000;
+}
+.eq-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.eq-grid line { stroke: var(--ws-display-dim); stroke-opacity: 0.22; stroke-width: 1; }
+.eq-grid .eq-zero line { stroke-opacity: 0.55; }
+.eq-grid text { fill: currentColor; color: var(--ws-display-dim); font: 11px var(--font-readout-stack); }
+.eq-curve {
+  fill: none; stroke: var(--ws-amber); stroke-width: 2.4; stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--ws-amber)) drop-shadow(0 0 10px color-mix(in srgb, var(--ws-amber) 60%, transparent));
+}
+.is-bypassed .eq-curve { stroke: var(--ws-display-dim); filter: none; opacity: 0.6; }
+
+.eq-node {
+  position: absolute; display: grid; place-items: center; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%;
+  font: 11px/1 var(--font-readout-stack); color: var(--ws-display-ink);
+  border: 2px solid var(--ws-display-ink); background: var(--ws-display);
+  cursor: ns-resize; touch-action: none;
+  transition: box-shadow 0.15s var(--ws-ease), background 0.15s var(--ws-ease);
+}
+.eq-node:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-amber) 35%, transparent); }
+.eq-node.is-selected, .eq-node:focus-visible {
+  border-color: var(--ws-amber); background: color-mix(in srgb, var(--ws-amber) 55%, var(--ws-display));
+  box-shadow: 0 0 10px var(--ws-amber);
+}
+.eq-node:focus-visible { outline: 2px solid var(--ws-display-ink); outline-offset: 3px; }
+.eq-node[aria-disabled='true'] { cursor: default; opacity: 0.6; }
+.eq-hint { margin: 0; font-size: 0.75rem; color: var(--ws-ink-2); }
+
+.eq-controls {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 12px 28px;
+  padding: 12px 14px; border-radius: 10px;
+  background: var(--ws-panel-2); box-shadow: inset 0 1px 0 var(--ws-edge-hi), inset 0 -1px 0 var(--ws-edge-lo);
+}
+.eq-controls .knob-value, .eq-readout-value, .eq-power-text { font-family: var(--font-readout-stack); }
+.eq-power {
+  display: inline-flex; align-items: center; gap: 8px; min-width: 84px; justify-content: center;
+  padding: 10px 14px; border-radius: 8px; cursor: pointer;
+  background: linear-gradient(var(--ws-panel), var(--ws-recess)); color: var(--ws-ink);
+  border: 1px solid var(--ws-edge-lo); box-shadow: inset 0 1px 0 var(--ws-edge-hi), 0 2px 0 var(--ws-edge-lo);
+  transition: transform 0.1s var(--ws-ease), box-shadow 0.1s var(--ws-ease);
+}
+.eq-power:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 1px 0 var(--ws-edge-hi), 0 1px 0 var(--ws-edge-lo); }
+.eq-power:focus-visible { outline: 3px solid var(--ws-amber); outline-offset: 2px; }
+.eq-power:disabled { opacity: 0.55; cursor: default; }
+.eq-power-led { width: 10px; height: 10px; border-radius: 50%; background: var(--ws-led-off); box-shadow: inset 0 0 0 1px #0006; }
+.eq-power.is-on .eq-power-led { background: var(--ws-green); box-shadow: 0 0 8px var(--ws-green); }
+.eq-power-text { font-size: 0.95rem; letter-spacing: 0.08em; }
+
+.eq-strip {
+  display: grid; grid-template-columns: 3.2rem repeat(6, minmax(64px, 1fr)); gap: 4px 6px; align-items: center; overflow-x: auto;
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--ws-panel-2); box-shadow: inset 0 1px 0 var(--ws-edge-hi), inset 0 -1px 0 var(--ws-edge-lo);
+}
+.eq-head, .eq-rowlabel { font-family: var(--font-label-stack); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--ws-ink-2); text-align: center; }
+.eq-rowlabel { text-align: left; }
+.eq-head.is-selected { color: var(--ws-ink); box-shadow: inset 0 -2px 0 var(--ws-amber); }
+.eq-cell { display: flex; justify-content: center; min-height: 1px; }
+.eq-strip .knob { min-width: 0; }
+.eq-strip .knob-dial, .eq-strip .knob-dial svg { width: 52px; height: 52px; }
+.eq-strip .knob-value { font-family: var(--font-readout-stack); font-size: 0.8rem; }
+/* The row and column headings name each knob; its own label stays for assistive technology only. */
+.eq-strip .knob-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.eq-readout {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 96px;
+}
+.eq-readout-value {
+  min-width: 88px; text-align: center; padding: 6px 10px; border-radius: 6px;
+  background: var(--ws-display); color: var(--ws-display-ink); font-size: 1rem;
+  box-shadow: inset 0 0 0 1px var(--ws-edge-lo);
+}
+.eq-readout-label { font-family: var(--font-label-stack); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--ws-ink-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-node, .eq-power { transition: none; }
+}
+
+/* Hardware look for the other Global options widgets (MatriboxGlobals.tsx). */
+.settings-knob { justify-content: center; }
+.hw-switch {
+  display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 34px; border-radius: 8px; cursor: pointer;
+  background: linear-gradient(var(--ws-panel), var(--ws-recess)); border: 1px solid var(--ws-edge-lo);
+  box-shadow: inset 0 1px 0 var(--ws-edge-hi), 0 2px 0 var(--ws-edge-lo);
+  transition: transform 0.1s var(--ws-ease), box-shadow 0.1s var(--ws-ease);
+}
+.hw-switch:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 1px 0 var(--ws-edge-hi), 0 1px 0 var(--ws-edge-lo); }
+.hw-switch:focus-visible { outline: 3px solid var(--ws-amber); outline-offset: 2px; }
+.hw-switch:disabled { opacity: 0.55; cursor: default; }
+.hw-switch-led { width: 12px; height: 12px; border-radius: 50%; background: var(--ws-led-off); box-shadow: inset 0 0 0 1px #0006; transition: background 0.15s var(--ws-ease); }
+.hw-switch.is-on .hw-switch-led { background: var(--ws-green); box-shadow: 0 0 9px var(--ws-green); }
+select.hw-select {
+  font-family: var(--font-readout-stack); background: var(--ws-display); color: var(--ws-display-ink);
+  border: 1px solid var(--ws-edge-lo); border-radius: 6px; padding: 6px 10px; box-shadow: inset 0 1px 6px #000;
+}
+select.hw-select:focus-visible { outline: 2px solid var(--ws-amber); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .hw-switch, .hw-switch-led { transition: none; }
+}

@@ -21,6 +21,13 @@ export const withEqLevel = (g: MbGlobalState, level: number): MbGlobalState => (
 
 export const withEqGain = (g: MbGlobalState, band: number, gain: number): MbGlobalState => ({ ...g, eq: { ...g.eq, bands: g.eq.bands.map((b, i) => (i === band ? { ...b, gain } : b)) } });
 
+export const withEqFrequency = (g: MbGlobalState, target: number | 'lowCut' | 'highCut', frequency: number): MbGlobalState =>
+  typeof target === 'number'
+    ? { ...g, eq: { ...g.eq, bands: g.eq.bands.map((b, i) => (i === target ? { ...b, frequency } : b)) } }
+    : { ...g, eq: { ...g.eq, [target]: { ...g.eq[target], frequency } } };
+
+export const withEqQ = (g: MbGlobalState, band: number, q: number): MbGlobalState => ({ ...g, eq: { ...g.eq, bands: g.eq.bands.map((b, i) => (i === band ? { ...b, q } : b)) } });
+
 export const withEqOn = (g: MbGlobalState, eqOn: boolean): MbGlobalState => ({ ...g, eqOn });
 
 /** The unit's MIDI channel for the editor's Control Changes: its USB input channel, or null for Omni (any channel). */

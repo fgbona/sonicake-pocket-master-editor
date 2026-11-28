@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, connect } from './fixtures.ts';
+import { test, expect, connect, openDock } from './fixtures.ts';
 import { measure } from './contrast.ts';
 import { openAssistantChat } from './assistant-chat.ts';
 
@@ -115,6 +115,7 @@ for (const [theme, block] of [
 // The import inputs are transparent overlays on their buttons: Tab must show where focus is.
 test('Tab onto a file import shows a focus ring on its button', async ({ page, pedal }) => {
   await connect(page, pedal);
+  await openDock(page, 'Library');
   await page.getByRole('button', { name: 'Export preset' }).focus();
   await page.keyboard.press('Tab');
   const label = page.locator('label.file-button', { hasText: 'Import preset' });

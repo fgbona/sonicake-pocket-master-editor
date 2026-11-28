@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Page, Route } from '@playwright/test';
 import { encodeClo } from '@pocket-master/core';
 import { en, pt } from '../lib/messages.ts';
-import { connectMatribox, expect, test } from './matribox-fixtures.ts';
+import { connectMatribox, expect, test, openDock } from './matribox-fixtures.ts';
 
 const NAM = new URL('../../../packages/core/test/fixtures/clo/ref_input.nam', import.meta.url);
 const PICK = 'Choose a capture file (.nam or .clo)';
@@ -17,6 +17,7 @@ const panel = (page: Page) => page.getByRole('region', { name: 'Clones' });
 
 test('a .clo is checked, named and written to CLONE 9 only after the confirmation', async ({ page, unit }) => {
   await connectMatribox(page);
+  await openDock(page, 'Clones & IRs');
   const clones = panel(page);
   await expect(clones.getByRole('listbox')).toHaveCount(0);
   await expect(clones.getByText('CLONE 9')).toBeVisible();
@@ -44,6 +45,7 @@ test('a .clo is checked, named and written to CLONE 9 only after the confirmatio
 test('a .nam whose reference signal cannot be downloaded shows the error and sends nothing', async ({ page, unit }) => {
   await page.route('https://raw.githubusercontent.com/skyggedans/SonicMaster/**', (route) => route.fulfill({ status: 404, body: 'not found' }));
   await connectMatribox(page);
+  await openDock(page, 'Clones & IRs');
   const clones = panel(page);
   await clones.getByLabel(PICK).setInputFiles(file('Rectifier Crunch.nam', readFileSync(NAM)));
   await expect(clones.getByRole('textbox', { name: 'Name' })).toHaveValue('Rectifier Crunch');
@@ -71,6 +73,7 @@ test('the assistant proposes a capture from a link; the Clones panel asks the pe
   });
   await page.route('https://clones.example/**', (route) => route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/octet-stream', body: clo() }));
   await connectMatribox(page);
+  await openDock(page, 'Assistant');
   const chat = page.getByRole('region', { name: 'Tone assistant' });
   const setup = chat.getByRole('region', { name: 'Groq key' });
   await setup.getByLabel('Groq API key').fill('fake-groq-key-e2e-0000');
@@ -86,6 +89,7 @@ test('the assistant proposes a capture from a link; the Clones panel asks the pe
   await expect(chat.getByText('Written, if you confirmed.')).toBeVisible();
   expect(unit.cloneUploads).toHaveLength(1);
   expect(JSON.stringify(requests[1]!.messages.at(-1))).toContain('The person wrote \\"Rect Crunch\\" to CLONE 4.');
+  await openDock(page, 'Clones & IRs');
   await expect(panel(page).getByText('Written to CLONE 4 as “Rect Crunch”.')).toBeVisible();
 });
 
@@ -99,6 +103,7 @@ test('a link that cannot be downloaded is an error for the assistant, and the pe
   });
   await page.route('https://clones.example/**', (route) => route.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' }, body: 'no' }));
   await connectMatribox(page);
+  await openDock(page, 'Assistant');
   const chat = page.getByRole('region', { name: 'Tone assistant' });
   const setup = chat.getByRole('region', { name: 'Groq key' });
   await setup.getByLabel('Groq API key').fill('fake-groq-key-e2e-0000');
@@ -114,6 +119,7 @@ test.describe('in Portuguese', () => {
   test.use({ locale: 'pt-BR' });
   test('the Clones panel leaves no English on the page', async ({ page }) => {
     await connectMatribox(page);
+    await openDock(page, pt['ws.rack.clones']);
     const clones = page.getByRole('region', { name: pt['mbClone.title'] });
     await clones.getByLabel(pt['mbClone.pick']).setInputFiles(file('meu amp.clo', clo()));
     await expect(clones.getByText(/^Pronto\./)).toBeVisible();

@@ -37,6 +37,9 @@
  *     ]
  *   }
  *
+ * Parameter units (ms, Hz, ...) are not here: they live in units.json next to this file, written by
+ * hand and keyed "MODULE:Label" (or "MODULE:fxid:Label"), so a re-run of this script keeps them.
+ *
  * Never emitted: the source's descriptions, parameter help, notes, legal notice block or model
  * display names, nor trademark signs. The output is checked against this schema: any key outside
  * it, or a trademark sign anywhere, and the script refuses to write.

@@ -8,6 +8,8 @@ import { snakePath } from '@/lib/snakePath';
 import { PedalTile, TileMove } from './TileStrip';
 import { useI18n } from './I18n';
 import { useTileDrag } from './useTileDrag';
+import { rigCategory, rigIconSpec } from '@/lib/rigIcon';
+import { RigIcon } from './rig/RigIcon';
 
 interface Props {
   chain: readonly MbResolvedBlock[];
@@ -20,6 +22,8 @@ interface Props {
   onOn: (slot: number, on: boolean) => void;
   onMove: (from: number, to: number) => void;
   onAdd: (moduleIndex: number, fxid: number) => void;
+  /** Storage slots whose stored values the edit buffer no longer matches. */
+  dirty?: ReadonlySet<number>;
 }
 
 /** What a tile says under the module: the model, the user IR or capture it plays, or the raw model id. */
@@ -90,7 +94,7 @@ function useMenuUnder(open: boolean, wrap: RefObject<HTMLElement | null>, tile: 
  * block, the LED switches it, a drag (or the arrows) moves it, and the last tile adds a block
  * while the unit has a free slot (MatriboxAddMenu).
  */
-export function MatriboxChain({ chain, selected, disabled, userSlot, onSelect, onOn, onMove, onAdd }: Props) {
+export function MatriboxChain({ chain, selected, disabled, userSlot, onSelect, onOn, onMove, onAdd, dirty }: Props) {
   const { t } = useI18n();
   const [adding, setAdding] = useState(false);
   const addRef = useRef<HTMLButtonElement>(null);
@@ -130,6 +134,8 @@ export function MatriboxChain({ chain, selected, disabled, userSlot, onSelect, o
                 ledLabel={t(block.on ? 'block.onAria' : 'block.offAria', { block: name })}
                 onSelect={() => onSelect(block.slot)}
                 onToggle={() => onOn(block.slot, !block.on)}
+                dirtyLabel={dirty?.has(block.slot) ? t('ws.blockEdited') : undefined}
+                drawing={<RigIcon spec={rigIconSpec(rigCategory(block), `${block.moduleIndex}:${block.fxid}`, block.params.length, block.model?.name ?? '')} size={56} />}
               />
               {!disabled && (
                 <TileMove

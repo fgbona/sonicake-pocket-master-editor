@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { parseMatriboxPrst, parseMbPreset, toHex, writeMatriboxPrst } from '@pocket-master/core';
-import { blockPanel, connectMatribox, expect, MODELS, test, turnKnob } from './matribox-fixtures.ts';
+import { blockPanel, connectMatribox, expect, MODELS, test, turnKnob, openDock } from './matribox-fixtures.ts';
 
 const loaded = (unit: { editBuffer: Uint8Array }) => parseMbPreset(unit.editBuffer);
 const KEPT = [2, 3, 4, 5, 7, 9];
@@ -54,6 +54,7 @@ test('import shows what the file holds, needs a confirmation, backs the target u
   const backups = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), BACKUPS);
   // What 2B stored (empty here), read with 2B loaded.
   expect(backups.map((b: { label: string; name: string; source: string }) => [b.label, b.name, b.source])).toEqual([['2B', '', 'slot']]);
+  await openDock(page, 'Backups');
   await expect(page.getByRole('region', { name: 'Matribox backups' })).toContainText('2B');
 });
 

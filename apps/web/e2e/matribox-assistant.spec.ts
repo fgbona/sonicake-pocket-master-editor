@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 import { mbAssignments, parseMbPreset } from '@pocket-master/core';
-import { blockPanel, connectMatribox, expect, expectChain, MODELS, test, turnKnob } from './matribox-fixtures.ts';
+import { blockPanel, connectMatribox, expect, expectChain, MODELS, test, turnKnob, openDock } from './matribox-fixtures.ts';
 
 // Groq is simulated: every call is answered here, so nothing leaves the machine.
 type Reply = { body: unknown };
@@ -24,6 +24,7 @@ const chain = expectChain;
 const loaded = (unit: { editBuffer: Uint8Array }) => parseMbPreset(unit.editBuffer);
 
 async function openChat(page: Page) {
+  await openDock(page, 'Assistant');
   const setup = panel(page).getByRole('region', { name: 'Groq key' });
   await setup.getByLabel('Groq API key').fill('fake-groq-key-e2e-0000');
   await setup.getByRole('button', { name: 'Save key' }).click();
@@ -98,6 +99,7 @@ test('the assistant makes the tone live-ready: EXP, a footswitch and a quick kno
   // The tool answer the model read back lists the controls as the unit has them now.
   const answer = requests[1]!.messages.at(-1)!.content!;
   expect(answer).toMatch(/Quick knob 1: 2 DRV Gain/);
+  await openDock(page, 'Controls');
   await expect(page.getByRole('region', { name: 'Footswitches and CTRL (stomp mode)' }).getByRole('switch', { name: 'CTRL 2 switches 5. RVB' })).toHaveAttribute('aria-checked', 'true');
 });
 
@@ -151,6 +153,7 @@ test.describe('in Portuguese', () => {
   test.use({ locale: 'pt-BR' });
   test('the Matribox assistant speaks Portuguese', async ({ page }) => {
     await connectMatribox(page);
+    await openDock(page, 'Assistente');
     await expect(page.getByText(/o catálogo de modelos vão para o provedor da sua chave/)).toBeVisible();
   });
 });

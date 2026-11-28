@@ -36,6 +36,7 @@ export * from './tone3000.ts';
 export * from './globals.ts';
 export * from './matribox/frame.ts';
 export * from './matribox/catalog.ts';
+export * from './matribox/format.ts';
 export * from './matribox/lzo1x.ts';
 export * from './matribox/ir.ts';
 export * from './matribox/clone.ts';

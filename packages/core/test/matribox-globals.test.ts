@@ -9,7 +9,9 @@ import {
   MB_GLOBALS,
   mbReadGlobalState,
   mbSetGlobal,
+  mbSetGlobalEqFrequency,
   mbSetGlobalEqGain,
+  mbSetGlobalEqQ,
   mbSetGlobalEqLevel,
   mbSetGlobalEqOn,
   mbWriteGlobalEqOn,
@@ -204,6 +206,9 @@ test('the link reads the globals from the simulated unit and every write is conf
   await link.write(mbSetGlobalEqGain(1, 3));
   await link.write(mbSetGlobalEqGain(3, -4));
   await link.write(mbSetGlobalEqLevel(70));
+  await link.write(mbSetGlobalEqFrequency(1, 600));
+  await link.write(mbSetGlobalEqQ(1, 2));
+  await link.write(mbSetGlobalEqFrequency('lowCut', 120));
   await mbWriteGlobalEqOn(link, false);
   const after = await mbReadGlobalState(link);
   assert.equal(after.general.inputLevel, -3);
@@ -213,6 +218,7 @@ test('the link reads the globals from the simulated unit and every write is conf
   assert.equal(after.eq.bands[1]?.gain, 3);
   assert.equal(after.eq.bands[3]?.gain, -4);
   assert.equal(after.eq.level, 70);
+  assert.deepEqual([after.eq.bands[1]?.frequency, after.eq.bands[1]?.q, after.eq.lowCut.frequency], [600, 2, 120]);
   assert.equal(after.eqOn, false);
 });
 
@@ -232,4 +238,34 @@ test('Global Tempo cannot be switched on before it has a BPM: the unit answers 0
   const fake = new FakeMatribox(); // BPM never set
   await assert.rejects(linked(fake).write(mbSetGlobal('tempoOn', 1)), /did not confirm/);
   assert.equal(fake.globals.general[MB_GLOBALS.tempoOn.at], 0);
+});
+
+// Not captured from the official editor: the words follow the documented layout (docs/matribox.md).
+test('EQ frequency and Q writes go to the words of the layout', () => {
+  const word = (f: Uint8Array) => sentData(f).slice(0, 2);
+  assert.deepEqual(
+    [0, 1, 2, 3].map((b) => word(mbSetGlobalEqFrequency(b, 500))),
+    ['08', '0C', '10', '14'],
+  );
+  assert.deepEqual(
+    [0, 1, 2, 3].map((b) => word(mbSetGlobalEqQ(b, 1))),
+    ['09', '0D', '11', '15'],
+  );
+  assert.equal(word(mbSetGlobalEqFrequency('lowCut', 80)), '01');
+  assert.equal(word(mbSetGlobalEqFrequency('highCut', 8000)), '1C');
+  assert.doesNotThrow(() => mbSetGlobalEqFrequency('lowCut', 19));
+  assert.doesNotThrow(() => mbSetGlobalEqFrequency('highCut', 20001));
+});
+
+test('EQ frequency and Q writes refuse values outside their ranges', () => {
+  assert.throws(() => mbSetGlobalEqFrequency(4, 500), /band/);
+  assert.throws(() => mbSetGlobalEqFrequency(0, 19), /frequency/);
+  assert.throws(() => mbSetGlobalEqFrequency(0, 20001), /frequency/);
+  assert.throws(() => mbSetGlobalEqFrequency('lowCut', 1001), /low cut/);
+  assert.throws(() => mbSetGlobalEqFrequency('lowCut', 18), /low cut/);
+  assert.throws(() => mbSetGlobalEqFrequency('highCut', 999), /high cut/);
+  assert.throws(() => mbSetGlobalEqFrequency('highCut', 20002), /high cut/);
+  assert.throws(() => mbSetGlobalEqQ(0, 0.05), /Q/);
+  assert.throws(() => mbSetGlobalEqQ(0, 11), /Q/);
+  assert.throws(() => mbSetGlobalEqQ(-1, 1), /band/);
 });

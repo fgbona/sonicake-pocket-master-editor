@@ -9,7 +9,6 @@ import { connectMatribox, expect, test } from './matribox-fixtures.ts';
 const SHOTS = process.env.KNOB_SHOTS;
 const { defaultBrowserType: _, ...pixel } = devices['Pixel 7'];
 /** The dial's height: a switch or selector is centred on a dial this tall. */
-const DIAL = 64;
 
 interface Item {
   top: number;
@@ -18,6 +17,8 @@ interface Item {
   /** Vertical centre of a switch or selector, null for a knob. */
   control: number | null;
   hint: boolean;
+  /** The dial's height: the workstation draws bigger dials in the block panel than on a phone. */
+  dialHeight: number;
 }
 
 /** Each control of the panel with the tops that matter. */
@@ -32,6 +33,7 @@ const items = (panel: Locator): Promise<Item[]> =>
         label: el.querySelector('.knob-label')!.getBoundingClientRect().top,
         control: control ? control.top + control.height / 2 : null,
         hint: !!el.querySelector('.knob-hint'),
+        dialHeight: dial ? dial.height : 0,
       };
     }),
   );
@@ -57,7 +59,8 @@ async function expectAligned(panel: Locator, name: string) {
     expect(spread(row.map((i) => i.label)), `${name}: labels of a row share a top`).toBeLessThanOrEqual(1);
     const dials = row.flatMap((i) => (i.dial === null ? [] : [i.dial]));
     expect(spread(dials), `${name}: dials of a row share a top`).toBeLessThanOrEqual(1);
-    const centre = dials.length ? dials[0]! + DIAL / 2 : null;
+    const height = row.find((i) => i.dial !== null)?.dialHeight ?? 0;
+    const centre = dials.length ? dials[0]! + height / 2 : null;
     for (const i of row) if (i.control !== null && centre !== null) expect(Math.abs(i.control - centre), `${name}: control on the dial row`).toBeLessThanOrEqual(1);
   }
   return all;

@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useI18n } from './I18n';
+import { DirtyMark } from './workstation/DirtyMark';
 
 interface Props {
   label: string;
@@ -14,6 +16,8 @@ interface Props {
   /** A note under the label, e.g. the range "-80 … 0". */
   hint?: string;
   disabled?: boolean;
+  /** The value differs from what the pedal stores: an amber dot says so. */
+  dirty?: boolean;
   onChange: (value: number) => void;
 }
 
@@ -35,9 +39,21 @@ const arc = (from: number, to: number) => {
   return `M${x1} ${y1}A${R} ${R} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}`;
 };
 
-/** A rotary control: drag up/down, wheel, arrow keys; double-click returns to the default. */
-export function Knob({ label, value, min, max, step = 1, display, defaultValue, hint, disabled = false, onChange }: Props) {
+/** The number a person typed ("-3.5 dB", "1,2"), or null when there is none. */
+export const typedNumber = (text: string) => {
+  const n = Number.parseFloat(text.replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+};
+
+/**
+ * A rotary control: drag up/down (Shift: fine), wheel, arrow keys; click the value (or Enter) to type
+ * one; double-click returns to the default.
+ */
+export function Knob({ label, value, min, max, step = 1, display, defaultValue, hint, disabled = false, dirty = false, onChange }: Props) {
   const id = useId();
+  const { t } = useI18n();
+  const [typing, setTyping] = useState(false);
+  const cancelled = useRef(false);
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; value: number } | null>(null);
   const latest = useRef({ value, onChange });
@@ -69,10 +85,39 @@ export function Knob({ label, value, min, max, step = 1, display, defaultValue, 
   const angle = -SWEEP / 2 + ((value - min) / span) * SWEEP;
   const [dx, dy] = polar(angle);
   return (
-    <div className={`knob${disabled ? ' is-disabled' : ''}`}>
-      <span className="knob-value" aria-hidden="true">
-        {display}
-      </span>
+    <div className={`knob${disabled ? ' is-disabled' : ''}${dirty ? ' is-dirty' : ''}`}>
+      {dirty && <DirtyMark />}
+      {typing ? (
+        <input
+          className="knob-value knob-input"
+          aria-label={t('knob.input', { label })}
+          defaultValue={String(value)}
+          inputMode="decimal"
+          // biome-ignore lint/a11y/noAutofocus: opened by the person to type a value right away
+          autoFocus
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              cancelled.current = true;
+              e.currentTarget.blur();
+            } else if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+          onBlur={(e) => {
+            const n = cancelled.current ? null : typedNumber(e.currentTarget.value);
+            cancelled.current = false;
+            setTyping(false);
+            if (n !== null) set(n);
+          }}
+        />
+      ) : disabled ? (
+        <span className="knob-value" aria-hidden="true">
+          {display}
+        </span>
+      ) : (
+        <button type="button" className="knob-value" aria-label={t('knob.type', { label })} onClick={() => setTyping(true)}>
+          {display}
+        </button>
+      )}
       <div
         ref={ref}
         className="knob-dial"
@@ -112,6 +157,7 @@ export function Knob({ label, value, min, max, step = 1, display, defaultValue, 
           if (e.key in moves) set(value + moves[e.key]!);
           else if (e.key === 'Home') set(min);
           else if (e.key === 'End') set(max);
+          else if (e.key === 'Enter') setTyping(true);
           else return;
           e.preventDefault();
         }}

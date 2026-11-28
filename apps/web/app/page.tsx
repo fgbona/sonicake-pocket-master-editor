@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { BackupsPanel } from '@/components/BackupsPanel';
 import { ChainView } from '@/components/ChainView';
 import { SaveDialog } from '@/components/SaveDialog';
@@ -26,6 +26,8 @@ import { MatriboxEditor } from '@/components/MatriboxEditor';
 import { AiConnectionPanel } from '@/components/AiConnectionPanel';
 import { useAiAgent } from '@/lib/aiBridge';
 import { SITE_TITLE } from '@/lib/seo';
+import { usePocketDevice } from '@/lib/workstation/useDevice';
+import { Dock, type DockTab } from '@/components/workstation/Dock';
 
 const STEPS = ['empty.step1', 'empty.step2'] as const;
 const LOG_KEY = 'pocket-master-editor.showLog';
@@ -35,6 +37,7 @@ const APP_NAME = 'OpenSonicX';
 
 export default function EditorPage() {
   const pm = usePocketMaster();
+  const device = usePocketDevice(pm);
   const { t, te } = useI18n();
   const desktop = useIsDesktop();
   const [saveOpen, setSaveOpen] = useState(false);
@@ -57,6 +60,7 @@ export default function EditorPage() {
       // storage blocked: the choice lasts for this page only
     }
   };
+  // The global settings are read once asked for (the ⚙ button or their tab), then kept on show.
   const [settingsOpen, setSettingsOpen] = useState(false);
   // The tone assistant loads and saves through the same confirmations a person sees.
   const [assistantLoad, setAssistantLoad] = useState<{ index: number; resolve: (loaded: boolean) => void } | null>(null);
@@ -113,6 +117,113 @@ export default function EditorPage() {
   useEffect(() => {
     if (connected && names === null) void loadNames();
   }, [connected, names, loadNames]);
+  // The workstation shell: once a preset is read, the chain and its block fill the screen and the rest sits in the dock.
+  const shell = connected && pm.preset !== null;
+  const [dock, setDock] = useState<string | null>(null);
+  // A preset file picked anywhere (Backups, the library) is confirmed in the Library tab: show it.
+  useEffect(() => {
+    if (importing) setDock('ws-library');
+  }, [importing]);
+  const presetFiles = pm.preset && (
+    <PresetFiles
+      connected={connected}
+      current={pm.preset}
+      busy={pm.busy}
+      error={pm.error}
+      pending={importing}
+      onPick={setImporting}
+      onExport={pm.exportPreset}
+      onImport={importPreset}
+      onError={pm.showError}
+    />
+  );
+  const backups = (
+    <>
+      <BackupsPanel
+        backups={pm.backups}
+        connected={connected}
+        busy={pm.busy}
+        error={pm.error}
+        flowBackups={pm.flowBackups}
+        storageWarning={pm.storageWarning}
+        onDownload={pm.downloadBackup}
+        onImport={pm.importBackup}
+        onDelete={pm.deleteBackup}
+        onPreset={(file) => {
+          pm.clearError();
+          setImporting(file);
+        }}
+        onRestore={pm.restore}
+        onBackupAll={pm.backupAll}
+        onRestoreAll={pm.restoreAll}
+      />
+      <AiConnectionPanel />
+      {showLog && <SysexLog log={pm.log} onClear={pm.clearLog} />}
+      <p className="page-tools">
+        <button type="button" className="btn-link" onClick={toggleLog}>
+          {t(showLog ? 'log.hide' : 'log.show')}
+        </button>
+      </p>
+    </>
+  );
+  // Without a connected pedal only the files and the backups show, one after the other.
+  const dockTabs: DockTab[] = connected
+    ? [
+        ...(pm.preset ? [{ id: 'ws-assistant', label: 'ws.rack.assistant', content: <AssistantPanel agent={toneAgent} /> } as const] : []),
+        {
+          id: 'ws-clones',
+          label: 'ws.rack.clones',
+          content: (
+            <>
+              <Tone3000Panel connected={connected} busy={pm.busy !== null} irNames={pm.irNames} profileNames={pm.profileNames} exclusive={pm.exclusive} error={pm.error} />
+              <SlotsPanel connected={connected} busy={pm.busy !== null} irNames={pm.irNames} profileNames={pm.profileNames} exclusive={pm.exclusive} error={pm.error} />
+            </>
+          ),
+        },
+        {
+          id: 'ws-library',
+          label: 'ws.rack.library',
+          content: (
+            <>
+              {presetFiles}
+              <PresetLibrary
+                disabled={pm.busy !== null || !pm.preset}
+                onLoad={(file) => {
+                  pm.clearError();
+                  setImporting(file);
+                }}
+              />
+            </>
+          ),
+        },
+        { id: 'ws-backups', label: 'ws.rack.backups', content: backups },
+        {
+          id: 'ws-global',
+          label: 'ws.rack.global',
+          content: (
+            <SettingsDialog
+              inline
+              open={settingsOpen}
+              onOpen={() => setSettingsOpen(true)}
+              firmware={pm.firmware}
+              onClose={() => {
+                setSettingsOpen(false);
+                setDock(null);
+              }}
+              exclusive={pm.exclusive}
+              writeGlobal={pm.writeGlobal}
+              busy={pm.busy !== null}
+              error={pm.error}
+              factoryReset={pm.factoryReset}
+              onReset={pm.reconnect}
+            />
+          ),
+        },
+      ]
+    : [
+        { id: 'ws-library', label: 'ws.rack.library', content: presetFiles },
+        { id: 'ws-backups', label: 'ws.rack.backups', content: backups },
+      ];
   return (
     <>
       {/* React puts it in the head. It is the page's only <title> (a title in layout.tsx would come first and hide it); the exported HTML carries the search title. */}
@@ -147,20 +258,11 @@ export default function EditorPage() {
         onSettings={() => {
           pm.clearError();
           setSettingsOpen(true);
+          setDock('ws-global');
+          requestAnimationFrame(() => document.getElementById('ws-global')?.scrollIntoView({ block: 'start' }));
         }}
         onBluetooth={pm.connectBle}
         matribox={matribox !== null}
-      />
-      <SettingsDialog
-        open={settingsOpen}
-        firmware={pm.firmware}
-        onClose={() => setSettingsOpen(false)}
-        exclusive={pm.exclusive}
-        writeGlobal={pm.writeGlobal}
-        busy={pm.busy !== null}
-        error={pm.error}
-        factoryReset={pm.factoryReset}
-        onReset={pm.reconnect}
       />
       {matribox ? (
         <>
@@ -172,7 +274,7 @@ export default function EditorPage() {
           <MatriboxEditor port={matribox} footer={<AiConnectionPanel />} />
         </>
       ) : (
-        <div className={connected ? 'layout' : 'layout layout-single'}>
+        <div className={shell ? 'layout ws-shell' : connected ? 'layout' : 'layout layout-single'}>
           {connected && <PresetSidebar names={pm.names} current={pm.presetIndex} modified={pm.modified} disabled={pm.busy !== null} onReadNames={() => void pm.loadNames()} onLoad={pm.loadPreset} />}
           <main className="main">
             {pm.error && (
@@ -185,19 +287,6 @@ export default function EditorPage() {
                 {t('firmware.untested', { firmware: pm.firmware, tested: TESTED_FIRMWARE })}
               </p>
             )}
-            {pm.preset && (
-              <PresetFiles
-                connected={connected}
-                current={pm.preset}
-                busy={pm.busy}
-                error={pm.error}
-                pending={importing}
-                onPick={setImporting}
-                onExport={pm.exportPreset}
-                onImport={importPreset}
-                onError={pm.showError}
-              />
-            )}
             {pm.preset ? (
               <ChainView
                 preset={pm.preset}
@@ -208,6 +297,7 @@ export default function EditorPage() {
                 onEdit={pm.edit}
                 irNames={pm.irNames}
                 profileNames={pm.profileNames}
+                device={connected ? device : undefined}
               />
             ) : (
               <section className="empty">
@@ -222,47 +312,19 @@ export default function EditorPage() {
                 <p className="muted small">{t('empty.firmware')}</p>
               </section>
             )}
-            {connected && (
-              <>
-                {pm.preset && <AssistantPanel agent={toneAgent} />}
-                <Tone3000Panel connected={connected} busy={pm.busy !== null} irNames={pm.irNames} profileNames={pm.profileNames} exclusive={pm.exclusive} error={pm.error} />
-                <SlotsPanel connected={connected} busy={pm.busy !== null} irNames={pm.irNames} profileNames={pm.profileNames} exclusive={pm.exclusive} error={pm.error} />
-              </>
-            )}
-            {connected && (
-              <PresetLibrary
-                disabled={pm.busy !== null || !pm.preset}
-                onLoad={(file) => {
-                  pm.clearError();
-                  setImporting(file);
+            {shell ? (
+              <Dock
+                active={dock}
+                onActive={(id) => {
+                  // The settings are read the first time their tab opens.
+                  if (id === 'ws-global') setSettingsOpen(true);
+                  setDock(id);
                 }}
+                tabs={dockTabs}
               />
+            ) : (
+              dockTabs.map((tab) => <Fragment key={tab.id}>{tab.content}</Fragment>)
             )}
-            <BackupsPanel
-              backups={pm.backups}
-              connected={connected}
-              busy={pm.busy}
-              error={pm.error}
-              flowBackups={pm.flowBackups}
-              storageWarning={pm.storageWarning}
-              onDownload={pm.downloadBackup}
-              onImport={pm.importBackup}
-              onDelete={pm.deleteBackup}
-              onPreset={(file) => {
-                pm.clearError();
-                setImporting(file);
-              }}
-              onRestore={pm.restore}
-              onBackupAll={pm.backupAll}
-              onRestoreAll={pm.restoreAll}
-            />
-            <AiConnectionPanel />
-            {showLog && <SysexLog log={pm.log} onClear={pm.clearLog} />}
-            <p className="page-tools">
-              <button type="button" className="btn-link" onClick={toggleLog}>
-                {t(showLog ? 'log.hide' : 'log.show')}
-              </button>
-            </p>
             <Dialog
               open={assistantLoad !== null}
               title={t('presets.unsavedTitle')}

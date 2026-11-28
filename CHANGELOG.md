@@ -6,6 +6,11 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Workstation UI: the dock's Assistant tab is now "AI Assistant" ("Assistente IA"), so it is clear
+  the tone assistant is the AI.
+
 ## [1.3.0] - 2026-11-28
 
 ### Added

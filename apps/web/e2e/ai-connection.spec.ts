@@ -50,7 +50,7 @@ const run = (page: Page, name: string, args: unknown) => page.evaluate(([n, a]) 
 
 test('the web editor has no AI connection panel', async ({ page, pedal }) => {
   await connect(page, pedal);
-  await openDock(page, 'Assistant');
+  await openDock(page, 'AI Assistant');
   await expect(page.getByRole('region', { name: 'Tone assistant' })).toBeVisible();
   await expect(panel(page)).toHaveCount(0);
 });
